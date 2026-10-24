@@ -1,13 +1,14 @@
 import { app, BrowserWindow, Menu, Tray, nativeImage, ipcMain, screen } from 'electron';
 import {readFileSync,writeFileSync,existsSync} from 'node:fs';
 import path from 'node:path';
+import {petBounds} from '../src/core/windowGeometry';
 import {
  advancePet, initialPet, petCat, triggerActivity, greetNearby, clamp, sanitizeSettings,
  DEFAULT_SETTINGS, PROFILES, type PetId, type PetState, type Settings, type Activity,
  type Placement
 } from '../src/core/behavior';
 const IDS:PetId[]=['liam','ninoosh'];
-type PetRuntime={window:BrowserWindow,state:PetState,mask:Uint8Array|null,acceptsClick:boolean};
+type PetRuntime={window:BrowserWindow,state:PetState,displayId:number,mask:Uint8Array|null,acceptsClick:boolean};
 const pets=new Map<PetId,PetRuntime>();
 let tray:Tray|null=null;
 let settings:Settings={...DEFAULT_SETTINGS,enabled:{...DEFAULT_SETTINGS.enabled}};
@@ -29,7 +30,10 @@ function persist():void{
 }
 function getWorkArea(id:PetId):Electron.Rectangle{
  const current=pets.get(id);
- return current?screen.getDisplayMatching(current.window.getBounds()).workArea:screen.getPrimaryDisplay().workArea;
+ // Pin a pet to its original monitor. getDisplayMatching(window bounds) can
+ // switch displays while the small transparent window straddles an edge.
+ return screen.getAllDisplays().find(d=>d.id===current?.displayId)?.workArea
+   ?? screen.getPrimaryDisplay().workArea;
 }
 function imageMask(id:PetId):Uint8Array|null{
  const image=nativeImage.createFromPath(spritePath(id));
@@ -53,11 +57,12 @@ function pointOnPet(point:Electron.Point,pet:PetRuntime):boolean{
 function reposition(id:PetId):void{
  const p=pets.get(id);if(!p||p.window.isDestroyed())return;
  const area=getWorkArea(id);
- p.state.x=clamp(p.state.x,0,Math.max(0,area.width-settings.size));
- p.window.setBounds({
-  x:area.x+Math.round(p.state.x),y:area.y+area.height-settings.size-settings.floorOffset,
-  width:settings.size,height:settings.size
- },false);
+ const bounds=petBounds(area,settings.size,settings.floorOffset,p.state.x);
+ p.state.x=bounds.x-area.x;
+ const old=p.window.getBounds();
+ if(old.x!==bounds.x||old.y!==bounds.y||old.width!==bounds.width||old.height!==bounds.height){
+   p.window.setBounds(bounds,false);
+ }
 }
 function moveToPreset():void{
  for(const id of IDS){
@@ -133,7 +138,7 @@ function makePet(id:PetId):void{
  const s=initialPet(id,Math.max(0,area.width-settings.size),settings.placement);
  const win=new BrowserWindow({
   width:settings.size,height:settings.size,
-  x:area.x+Math.round(s.x),y:area.y+area.height-settings.size-settings.floorOffset,
+  ...petBounds(area,settings.size,settings.floorOffset,s.x),
   transparent:true,frame:false,resizable:false,fullscreenable:false,hasShadow:false,
   skipTaskbar:true,alwaysOnTop:true,show:false,backgroundColor:'#00000000',
   webPreferences:{
@@ -145,7 +150,7 @@ function makePet(id:PetId):void{
  win.setVisibleOnAllWorkspaces(true,{visibleOnFullScreen:false});
  win.setIgnoreMouseEvents(true,{forward:true});
  win.webContents.setWindowOpenHandler(()=>({action:'deny'}));
- const runtime:PetRuntime={window:win,state:s,mask:imageMask(id),acceptsClick:false};
+ const runtime:PetRuntime={window:win,state:s,displayId:screen.getPrimaryDisplay().id,mask:imageMask(id),acceptsClick:false};
  pets.set(id,runtime);
  win.once('ready-to-show',()=>{if(settings.enabled[id])win.showInactive();});
  const query={pet:id};
@@ -162,7 +167,7 @@ function tick():void{
  const a=pets.get('liam'),b=pets.get('ninoosh');
  if(a&&b&&settings.enabled.liam&&settings.enabled.ninoosh&&!settings.paused){
   // Only greet on the same display.
-  if(screen.getDisplayMatching(a.window.getBounds()).id===screen.getDisplayMatching(b.window.getBounds()).id){
+  if(a.displayId===b.displayId){
    const [aa,bb]=greetNearby(a.state,b.state);a.state=aa;b.state=bb;
   }
  }
