@@ -12,7 +12,7 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "build": "npm run assets && npm run typecheck && vite build && esbuild electron/main.ts --bundle --platform=node --target=node22 --format=cjs --external:electron --outfile=dist-electron/main.cjs && esbuild electron/preload.ts --bundle --platform=node --target=node22 --format=cjs --external:electron --outfile=dist-electron/preload.cjs",
-    "dist:mac": "npm run build && electron-builder --mac dmg zip --publish never",
+    "dist:mac": "npm run build && electron-builder --mac dmg zip --x64 --arm64 --publish never",
     "dist:win": "npm run build && electron-builder --win nsis portable --publish never"
   },
   "devDependencies": {
@@ -75,8 +75,12 @@
     },
     "nsis": {
       "oneClick": false,
-      "allowToChangeInstallationDirectory": true
+      "allowToChangeInstallationDirectory": true,
+      "artifactName": "DPet-Setup-${version}-${arch}.${ext}"
     },
-    "artifactName": "DPet-${version}-${os}-${arch}.${ext}"
+    "artifactName": "DPet-${version}-${os}-${arch}.${ext}",
+    "portable": {
+      "artifactName": "DPet-Portable-${version}-${arch}.${ext}"
+    }
   }
 }
