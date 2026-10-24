@@ -1,1 +1,20 @@
-<!doctype html><html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>DPet — Liam</title></head><body><div id="app"><canvas id="liam" width="80" height="80" aria-label="Liam the cat"></canvas><div id="controls"><span>DPet · Liam</span><button id="pause">Pause</button><button id="pet">Pet Liam</button></div><div id="hint">Liam explores on his own. Click to pet him.</div></div><script type="module" src="/src/main.ts"></script></body></html>
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/>
+<meta name="theme-color" content="#183e42"/><meta name="description" content="Two tiny cats, one happy desktop. DPet brings Liam and Ninoosh to life as playful desktop companions."/>
+<title>DPet — Liam &amp; Ninoosh</title></head>
+<body>
+<main id="app">
+ <section id="preview-intro">
+  <p class="eyebrow">DPET · DESKTOP COMPANIONS</p>
+  <h1>Meet Liam <span>&amp;</span> Ninoosh.</h1>
+  <p>Two tiny personalities exploring your desktop. A little walking, a little napping, and occasional mischief.</p>
+  <div class="toolbar">
+   <button id="pause">Pause roaming</button><button id="liam-pat">Pet Liam</button><button id="ninoosh-pat">Pet Ninoosh</button>
+  </div>
+  <small>Desktop settings: open the DPet icon in the menu bar / system tray.</small>
+ </section>
+ <div id="stage" aria-label="Liam and Ninoosh preview"></div>
+ <div id="meadow"></div>
+</main>
+<script type="module" src="/src/main.ts"></script>
+</body></html>

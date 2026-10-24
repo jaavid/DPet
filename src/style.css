@@ -1,15 +1,21 @@
-* { box-sizing: border-box; }
-html, body, #app { width: 100%; height: 100%; margin: 0; }
-body { overflow: hidden; color: #173932; font: 500 15px/1.5 system-ui, -apple-system, sans-serif; }
-#liam { display: block; width: 220px; height: 220px; image-rendering: pixelated; cursor: pointer; }
-.desktop, .desktop #app { background: transparent !important; }
-.desktop #liam { position: absolute; left: 0; top: 0; }
-.desktop #controls, .desktop #hint { display: none; }
-.preview { background: radial-gradient(ellipse at 40% 30%, #dcefc3, transparent 50%), linear-gradient(#a7d5d0 0%, #d8eac8 73%, #81b969 73%, #4b8c56 100%); }
-.preview #app::before { content: 'DPet • Liam’s little world'; position: absolute; top: 28px; left: 30px; color: #29574b; font-weight: 700; font-size: 22px; letter-spacing: -.05em; }
-.preview #liam { position: absolute; bottom: 12%; left: 40%; filter: drop-shadow(1px 6px 2px #416b3c45); }
-.preview #controls { position: absolute; display: flex; gap: 12px; align-items: center; right: 24px; top: 24px; padding: 12px 16px; border-radius: 16px; background: #ffffffd9; box-shadow: 0 8px 28px #2b4a3a22; }
-.preview #controls span { font-weight: 700; }
-.preview button { background: #245849; color: white; border: 0; border-radius: 9px; padding: 8px 12px; cursor: pointer; }
-.preview button:hover { background: #163e36; }
-.preview #hint { position: absolute; left: 30px; bottom: 28px; background: #fffa; border-radius: 9px; padding: 8px 12px; }
+*{box-sizing:border-box}
+html,body,#app{margin:0;width:100%;height:100%;overflow:hidden}
+body{font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif}
+#stage{position:absolute;inset:0;pointer-events:none}
+.pet{position:absolute;display:block;width:152px;height:152px;bottom:13%;left:0;image-rendering:pixelated;pointer-events:auto;cursor:pointer;filter:drop-shadow(0 7px 3px #294b3a44)}
+body.desktop,body.desktop #app{background:transparent!important}
+body.desktop #stage{position:absolute;inset:0}
+body.desktop .pet{bottom:auto;top:0;left:0;width:100%;height:100%;filter:none}
+body.desktop #preview-intro,body.desktop #meadow{display:none!important}
+body.preview{background:radial-gradient(circle at 75% 15%,#e5f2cf,transparent 32%),linear-gradient(180deg,#bfdfe4 0%,#e4f3df 65%,#b6d39f 65%,#90c27b 100%);color:#173c39}
+#preview-intro{position:absolute;z-index:2;left:clamp(22px,6vw,88px);top:clamp(24px,10vh,110px);max-width:550px}
+.eyebrow{font-size:12px;letter-spacing:.22em;font-weight:800;color:#428070}
+h1{font-size:clamp(32px,5vw,66px);line-height:1.08;letter-spacing:-.06em;margin:15px 0 20px}
+h1 span{color:#d39b60}
+#preview-intro>p:not(.eyebrow){line-height:1.7;color:#476a62;font-size:16px;max-width:430px}
+.toolbar{display:flex;gap:10px;flex-wrap:wrap;margin:24px 0}
+button{border:0;border-radius:12px;padding:11px 16px;background:#22564e;color:#fff;font-weight:650;cursor:pointer}
+button:hover{background:#143d37}
+#preview-intro small{color:#58766b}
+#meadow{position:absolute;bottom:0;height:13%;width:100%;background:linear-gradient(#7db36a,#528557);border-top:6px solid #c1dc8d}
+@media(max-width:600px){.toolbar{gap:6px}button{font-size:12px;padding:9px}#preview-intro{top:30px}}

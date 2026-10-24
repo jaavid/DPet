@@ -185,10 +185,12 @@ function startApp():void{
  tray=new Tray(icon);tray.setToolTip('DPet · Liam & Ninoosh');updateMenu();
  tray.on('double-click',()=>pat('liam'));
  for(const id of IDS)makePet(id);
- ipcMain.on('dpet:ready',(_event,id:PetId)=>{
-  const pet=pets.get(id);if(pet)pet.window.webContents.send('dpet:state',pet.state);
+ ipcMain.on('dpet:ready',(event)=>{
+  for(const p of pets.values())if(p.window.webContents.id===event.sender.id)event.sender.send('dpet:state',p.state);
  });
- ipcMain.on('dpet:pat',(_event,id:PetId)=>{if(IDS.includes(id))pat(id);});
+ ipcMain.on('dpet:pat',(event)=>{
+  for(const [id,p] of pets)if(p.window.webContents.id===event.sender.id){pat(id);break;}
+ });
  screen.on('display-metrics-changed',()=>{for(const id of IDS)reposition(id);});
  lastTick=Date.now();tickTimer=setInterval(tick,60);
 }
