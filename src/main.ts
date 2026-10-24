@@ -1,19 +1,20 @@
-import {advancePet,initialPet,petCat,PROFILES,type PetId,type PetState,type Activity} from './core/behavior';
+import {advancePet,initialPet,petCat,PROFILES,PET_IDS,type PetId,type PetState,type Activity} from './core/behavior';
 import {spriteFrame,spriteSource,SPRITE} from './core/spriteAtlas';
 import './style.css';
 const stage=document.querySelector<HTMLElement>('#stage')!;
 const desktop=Boolean(window.dpet);
 document.body.classList.add(desktop?'desktop':'preview');
+const selected=new URLSearchParams(location.search).get('pet');
 const ids:PetId[]=desktop
- ?[new URLSearchParams(location.search).get('pet')==='ninoosh'?'ninoosh':'liam']
- :['liam','ninoosh'];
+ ?[PET_IDS.includes(selected as PetId)?selected as PetId:'liam']
+ :[...PET_IDS];
 /**
  * Slice each pose into its own private 80x80 canvas once, before playback.
  * This prevents texture/filter sampling outside the selected sprite cell,
  * even if a browser or GPU interpolates a spritesheet source rectangle.
  */
 const spriteFrames=new Map<string,HTMLCanvasElement[]>();
-for(const id of ['liam','ninoosh'] as PetId[]){
+for(const id of PET_IDS){
  for(const sheet of ['walk','actions']){
   const key=id+'/'+sheet, img=new Image();
   img.onload=()=>{
@@ -50,7 +51,7 @@ function addPet(id:PetId):void{
  const ctx=canvas.getContext('2d',{alpha:true})!;
  ctx.imageSmoothingEnabled=false;
  contexts.set(id,ctx);
- states.set(id,initialPet(id,Math.max(0,innerWidth-previewSize),id==='liam'?'left':'center'));
+ states.set(id,initialPet(id,Math.max(0,innerWidth-previewSize),'left'));
  clocks.set(id,performance.now());
  canvas.addEventListener('click',()=>{
   if(desktop)window.dpet?.pat(id);
@@ -71,7 +72,7 @@ window.dpet?.onPat(()=>{for(const id of ids)clocks.set(id,performance.now());});
 let paused=false;
 const pause=document.querySelector<HTMLButtonElement>('#pause');
 pause?.addEventListener('click',()=>{paused=!paused;pause.textContent=paused?'Resume roaming':'Pause roaming';});
-for(const id of ['liam','ninoosh'] as PetId[]){
+for(const id of PET_IDS){
  document.getElementById(id+'-pat')?.addEventListener('click',()=>{
   const state=states.get(id);
   if(state){states.set(id,petCat(state));clocks.set(id,performance.now());}
@@ -99,7 +100,7 @@ function draw(now:number):void{
    ctx.drawImage(sprite,0,0,SPRITE.size,SPRITE.size);
   }else{
    // Fallback when assets have not loaded.
-   ctx.fillStyle=id==='liam'?'#f5ead9':'#d6c5af';
+   ctx.fillStyle=id==='liam'?'#f5ead9':id==='slash'?'#e9a665':id==='ozy'?'#b1adb0':'#d6c5af';
    ctx.beginPath();ctx.ellipse(40,51,29,21,0,0,Math.PI*2);ctx.fill();
   }
   ctx.restore();

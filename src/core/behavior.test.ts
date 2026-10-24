@@ -27,7 +27,7 @@ describe('two independent pets',()=>{
   it('recovers safely from bad saved settings',()=>{
     const x=sanitizeSettings({size:999,enabled:{ninoosh:false},floorOffset:999});
     expect(x.size).toBe(DEFAULT_SETTINGS.size);
-    expect(x.enabled).toEqual({liam:true,ninoosh:false});
+    expect(x.enabled).toEqual({liam:true,ninoosh:false,ozy:true,slash:true});
     expect(x.floorOffset).toBe(DEFAULT_SETTINGS.floorOffset);
   });
 });
