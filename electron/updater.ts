@@ -2,7 +2,7 @@ import {app,net,Notification,shell} from 'electron';
 import {autoUpdater} from 'electron-updater';
 type Release={tag_name:string;html_url:string;draft:boolean;prerelease:boolean;assets?:{name:string;browser_download_url:string}[]};
 export type UpdatePhase='idle'|'checking'|'up-to-date'|'available'|'downloading'|'downloaded'|'error';
-export type UpdateStatus={phase:UpdatePhase;version?:string;url?:string;message?:string};
+export type UpdateStatus={phase:UpdatePhase;version?:string;url?:string;downloadUrl?:string;message?:string};
 const RELEASES='https://api.github.com/repos/jaavid/DPet/releases?per_page=20';
 const DOWNLOADS='https://github.com/jaavid/DPet/releases';
 const INTERVAL=4*60*60*1000;
@@ -76,7 +76,12 @@ export class UpdateService{
     (r.assets?.some(a=>a.name.endsWith(process.platform==='win32'?'.exe':'.dmg'))??false)
    );
    if(release){
-    this.update({phase:'available',version:release.tag_name.replace(/^v/,''),url:release.html_url});
+    const architecture=process.arch==='arm64'?'arm64':'x64';
+    const suffix='-mac-'+architecture+'.dmg';
+    const asset=release.assets?.find(a=>a.name.endsWith(suffix)&&
+      a.browser_download_url.startsWith(DOWNLOADS+'/download/'));
+    this.update({phase:'available',version:release.tag_name.replace(/^v/,''),
+      url:release.html_url,downloadUrl:asset?.browser_download_url});
     if(prior.version!==release.tag_name.replace(/^v/,''))notify(release.tag_name);
     if(this.desktopWindowsUpdater){
      // Windows NSIS supports automatic download and replacement on quit.
@@ -92,7 +97,9 @@ export class UpdateService{
   }finally{this.checking=false;}
  }
  openRelease():void{
-  const target=this.state.url?.startsWith(DOWNLOADS+'/tag/')?this.state.url:DOWNLOADS;
+  const link=process.platform==='darwin'?this.state.downloadUrl:undefined;
+  const target=link?.startsWith(DOWNLOADS+'/download/')?link:
+    this.state.url?.startsWith(DOWNLOADS+'/tag/')?this.state.url:DOWNLOADS;
   void shell.openExternal(target);
  }
  installDownloaded():void{
