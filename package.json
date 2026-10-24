@@ -1,0 +1,82 @@
+{
+  "name": "dpet",
+  "version": "0.1.0",
+  "description": "Liam the desktop pet",
+  "private": true,
+  "type": "module",
+  "main": "dist-electron/main.cjs",
+  "scripts": {
+    "assets": "node scripts/prepare-assets.mjs",
+    "web": "npm run assets && vite --host 127.0.0.1",
+    "dev": "npm run assets && concurrently -k \"vite --host 127.0.0.1\" \"wait-on http://127.0.0.1:5173 && electron .\"",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "build": "npm run assets && npm run typecheck && vite build && esbuild electron/main.ts --bundle --platform=node --target=node22 --format=cjs --external:electron --outfile=dist-electron/main.cjs && esbuild electron/preload.ts --bundle --platform=node --target=node22 --format=cjs --external:electron --outfile=dist-electron/preload.cjs",
+    "dist:mac": "npm run build && electron-builder --mac dmg zip --publish never",
+    "dist:win": "npm run build && electron-builder --win nsis portable --publish never"
+  },
+  "devDependencies": {
+    "@types/node": "22.15.30",
+    "concurrently": "9.2.0",
+    "electron": "44.9.3",
+    "electron-builder": "26.18.0",
+    "esbuild": "0.25.12",
+    "typescript": "5.9.3",
+    "vite": "8.3.4",
+    "vitest": "4.0.13",
+    "wait-on": "8.0.4"
+  },
+  "build": {
+    "appId": "ir.dpet.liam",
+    "productName": "DPet",
+    "asar": true,
+    "files": [
+      "dist/**/*",
+      "dist-electron/**/*",
+      "package.json"
+    ],
+    "directories": {
+      "output": "release"
+    },
+    "mac": {
+      "category": "public.app-category.entertainment",
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        },
+        {
+          "target": "zip",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        }
+      ]
+    },
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
+    },
+    "artifactName": "DPet-${version}-${os}-${arch}.${ext}"
+  }
+}

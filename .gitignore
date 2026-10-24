@@ -1,0 +1,8 @@
+node_modules/
+dist/
+dist-electron/
+release/
+public/assets/liam-walk.png
+*.log
+.DS_Store
+.vscode/
