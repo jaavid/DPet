@@ -1,11 +1,11 @@
 /** Portable, testable simulation shared by desktop/web and future mobile clients. */
 export type Activity='walk'|'idle'|'sit'|'groom'|'nap'|'play'|'look'|'jump'|'happy';
 export type Direction=1|-1;
-export const PET_IDS=['liam','ninoosh','ozy','slash'] as const;
+export const PET_IDS=['liam','ninoosh','ozy','slash','toto','chico'] as const;
 export type PetId=typeof PET_IDS[number];
 export type Placement='left'|'center'|'right';
 export interface PetProfile {
- id:PetId; name:string; personality:'playful'|'calm'|'curious'|'energetic'; speed:number; scale:number;
+ id:PetId; name:string; species:'cat'|'cockatiel'; personality:'playful'|'calm'|'curious'|'energetic'; speed:number; scale:number;
 }
 export interface PetState {
  id:PetId; x:number; direction:Direction; activity:Activity;
@@ -17,14 +17,17 @@ export interface Settings {
  autoCheckUpdates:boolean;
 }
 export const PROFILES:Record<PetId,PetProfile>={
- liam:{id:'liam',name:'Liam',personality:'playful',speed:46,scale:1},
- ninoosh:{id:'ninoosh',name:'Ninoosh',personality:'calm',speed:29,scale:1.02},
- ozy:{id:'ozy',name:'Ozy',personality:'curious',speed:36,scale:1.04},
- slash:{id:'slash',name:'Slash',personality:'energetic',speed:51,scale:1.04}
+ liam:{id:'liam',species:'cat',name:'Liam',personality:'playful',speed:46,scale:1},
+ ninoosh:{id:'ninoosh',species:'cat',name:'Ninoosh',personality:'calm',speed:29,scale:1.02},
+ ozy:{id:'ozy',species:'cat',name:'Ozy',personality:'curious',speed:36,scale:1.04},
+ slash:{id:'slash',species:'cat',name:'Slash',personality:'energetic',speed:51,scale:1.04},
+ // Toto = all yellow; Chico = gray body / yellow head.
+ toto:{id:'toto',name:'Toto',species:'cockatiel',personality:'energetic',speed:27,scale:.94},
+ chico:{id:'chico',name:'Chico',species:'cockatiel',personality:'curious',speed:23,scale:.94}
 };
 export const DEFAULT_SETTINGS:Settings={
  size:140,floorOffset:16,placement:'left',
- enabled:{liam:true,ninoosh:true,ozy:true,slash:true},
+ enabled:{liam:true,ninoosh:true,ozy:true,slash:true,toto:true,chico:true},
  paused:false,playful:true,autoCheckUpdates:true
 };
 export function sanitizeSettings(raw:unknown):Settings {
@@ -44,11 +47,11 @@ export const clamp=(x:number,min:number,max:number):number=>Math.min(Math.max(x,
 export function spawnX(placement:Placement,maxX:number,id:PetId):number {
  const bound=Math.max(0,maxX);
  const anchor=placement==='left'?0.08:placement==='right'?0.77:0.37;
- const offset:Record<PetId,number>={liam:0,ninoosh:.12,ozy:.24,slash:.36};
+ const offset:Record<PetId,number>={liam:0,ninoosh:.12,ozy:.24,slash:.36,toto:.48,chico:.60};
  return clamp(bound*(anchor+offset[id]),0,bound);
 }
 export function initialPet(id:PetId,maxX:number,placement:Placement='left'):PetState {
- return {id,x:spawnX(placement,maxX,id),direction:id==='liam'||id==='ozy'?1:-1,
+ return {id,x:spawnX(placement,maxX,id),direction:PROFILES[id].species==='cockatiel'?-1:id==='liam'||id==='ozy'?1:-1,
   activity:'walk',elapsedMs:0,activityMs:2200,affection:0};
 }
 export function petCat(s:PetState):PetState {
@@ -77,12 +80,13 @@ export function advancePet(old:PetState,deltaMs:number,maxX:number,random:()=>nu
    s.activityMs=800+random()*900;
   }else{
    const roll=random();
+   const bird=PROFILES[s.id].species==='cockatiel';
    const calm=PROFILES[s.id].personality==='calm';
    const curious=PROFILES[s.id].personality==='curious';
-   if(roll<(calm?.23:curious?.16:.10))s.activity='nap';
-   else if(roll<(calm?.49:curious?.32:.24))s.activity='sit';
-   else if(roll<(calm?.66:.41))s.activity='groom';
-   else if(playful&&roll<(calm?.70:curious?.56:.57))s.activity='jump';
+   if(roll<(bird?.13:calm?.23:curious?.16:.10))s.activity='nap';
+   else if(roll<(bird?.32:calm?.49:curious?.32:.24))s.activity='sit';
+   else if(roll<(bird?.52:calm?.66:.41))s.activity='groom';
+   else if(playful&&roll<(bird?.73:calm?.70:curious?.56:.57))s.activity='jump';
    else s.activity='walk';
    s.activityMs=s.activity==='nap'?5400:s.activity==='walk'?2200+random()*3500:1500+random()*1100;
    if(s.activity==='walk'&&random()<.35)s.direction=s.direction===1?-1:1;

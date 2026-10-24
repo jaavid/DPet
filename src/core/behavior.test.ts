@@ -1,5 +1,5 @@
 import {expect,it,describe} from 'vitest';
-import {DEFAULT_SETTINGS,initialPet,advancePet,petCat,spawnX,sanitizeSettings,greetNearby,triggerActivity} from './behavior';
+import {DEFAULT_SETTINGS,PROFILES,PET_IDS,initialPet,advancePet,petCat,spawnX,sanitizeSettings,greetNearby,triggerActivity} from './behavior';
 describe('two independent pets',()=>{
   it('starts at predictable placements',()=>{expect(initialPet('liam',400,'left').x).toBeLessThan(initialPet('liam',400,'right').x);});
   it('keeps both cats inside screen and turns at edges',()=>{
@@ -27,7 +27,19 @@ describe('two independent pets',()=>{
   it('recovers safely from bad saved settings',()=>{
     const x=sanitizeSettings({size:999,enabled:{ninoosh:false},floorOffset:999});
     expect(x.size).toBe(DEFAULT_SETTINGS.size);
-    expect(x.enabled).toEqual({liam:true,ninoosh:false,ozy:true,slash:true});
+    expect(x.enabled).toEqual({liam:true,ninoosh:false,ozy:true,slash:true,toto:true,chico:true});
     expect(x.floorOffset).toBe(DEFAULT_SETTINGS.floorOffset);
   });
+});
+
+describe('bird companions',()=>{
+ it('identifies the yellow Toto and gray Chico correctly',()=>{
+  expect(PROFILES.toto.name).toBe('Toto');expect(PROFILES.chico.name).toBe('Chico');
+  expect(PROFILES.toto.species).toBe('cockatiel');expect(PROFILES.chico.species).toBe('cockatiel');
+  expect(PET_IDS).toHaveLength(6);
+ });
+ it('starts each bird facing left as its atlas is drawn',()=>{
+  expect(initialPet('toto',400).direction).toBe(-1);
+  expect(initialPet('chico',400).direction).toBe(-1);
+ });
 });

@@ -19,7 +19,7 @@ describe('transparent desktop window stays on its selected monitor',()=>{
 });
 
 describe('repaired atlases',()=>{
- for(const id of ['liam','ninoosh','ozy','slash']){
+ for(const id of ['liam','ninoosh','ozy','slash','toto','chico']){
   for(const kind of ['walk','actions']){
    it(id+'-'+kind+' has a transparent safety gutter around every cell',async()=>{
     const filename=path.join(process.cwd(),'public','assets',id+'-'+kind+'.png');

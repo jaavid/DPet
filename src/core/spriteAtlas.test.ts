@@ -1,7 +1,7 @@
 import {describe,it,expect} from 'vitest';
 import sharp from 'sharp';
 import path from 'node:path';
-import {ACTION_FRAME,SPRITE,spriteFrame,spriteSource} from './spriteAtlas';
+import {ACTION_FRAME,BIRD_ACTION_FRAME,SPRITE,spriteFrame,spriteSource} from './spriteAtlas';
 
 describe('approved sprites',()=>{
   it('maps all the action poses without accidental swaps',()=>{
@@ -9,9 +9,12 @@ describe('approved sprites',()=>{
     expect(spriteFrame('walk',0)).toBe(0);
     expect(spriteFrame('walk',960)).toBe(0);
     expect(spriteFrame('play',9999)).toBe(5);
+    expect(BIRD_ACTION_FRAME.groom).toBe(7);
+    expect(spriteFrame('nap',0,'toto')).toBe(1);
+    expect(spriteFrame('happy',0,'chico')).toBe(6);
     expect(spriteSource(6)).toEqual({x:160,y:80,width:80,height:80});
   });
-  for(const pet of ['liam','ninoosh']){
+  for(const pet of ['liam','ninoosh','ozy','slash','toto','chico']){
     for(const action of ['walk','actions']){
       it(pet+'-'+action+' is an 8-frame transparent atlas',async()=>{
         const file=path.join(process.cwd(),'assets','sprite-sheets',pet+'-'+action+'.png');

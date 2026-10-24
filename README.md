@@ -1,8 +1,8 @@
-# DPet — Liam, Ninoosh, Ozy & Slash
+# DPet — Liam, Ninoosh, Ozy, Slash, Toto & Chico
 
-**Four desktop cats. One lively desktop.**
+**Four cats and two cockatiels. One lively desktop.**
 
-DPet brings Liam, Ninoosh, Ozy and Slash onto your macOS, Windows or Linux desktop as independent little companions. Liam is a playful white-and-tabby cat; Ninoosh has a cream coat, a smoky face and folded ears. They walk, greet each other, sit, groom, nap, look around, jump and react to a click.
+DPet brings four cats (Liam, Ninoosh, Ozy, Slash) and two cockatiels (Toto, Chico) onto your macOS, Windows or Linux desktop. Liam is a playful white-and-tabby cat; Ninoosh has a cream coat, a smoky face and folded ears. They walk, greet each other, sit, groom, nap, look around, jump and react to a click.
 
 DPet does not need an account, server, microphone, tracking or internet connection.
 
@@ -14,15 +14,15 @@ Download the latest automated beta from [GitHub Releases](https://github.com/jaa
 
 Click the **DPet icon** in the Mac menu bar or Windows/Linux system tray to open settings:
 
-- **Pets** — show or hide Liam and Ninoosh independently.
+- **Pets** — show or hide all six companions independently.
 - **Size** — 100, 120, 140, 160 or 180 pixels (default 140).
 - **Start position** — left, center, right.
 - **Distance from bottom** — 0, 12, 16, 24, 48 or 80 pixels.
 - **Pause roaming** and **Playful behavior**.
-- **Liam actions / Ninoosh actions** — pet (happy reaction), walk, sit, groom, nap, play, look, jump, happy.
+- **Character actions** — cats have their usual poses; birds have perching, preening, hopping, bowing and wing-spreading poses.
 - **Launch at login** and Quit.
 
-Preferences are saved locally. Each of the four pets has a separate transparent desktop overlay; clicks outside the visible sprite pass through.
+Preferences are saved locally. Each of the six pets has a separate transparent desktop overlay; clicks outside the visible sprite pass through.
 
 ## Local development
 
@@ -45,14 +45,14 @@ Packaging: `npm run dist:mac` on Mac, `npm run dist:win` on Windows, or `npm run
 - `src/core/` — platform-independent deterministic behavior engine, with tests.
 - `src/main.ts` — Canvas renderer for desktop and browser.
 - `electron/` — native transparent windows, tray, saved settings and positioning.
-- `assets/sprite-sheets/` — four versioned, transparent 320×160 PNG atlases (80×80 frame, 4×2 grid).
+- `assets/sprite-sheets/` — twelve versioned, transparent 320×160 PNG atlases (80×80 frame, 4×2 grid).
 - `src/core/spriteAtlas.ts` — shared frame order and mapping to behavior states.
 - `scripts/prepare-assets.mjs` — validates/copies approved atlases and generates branded native icons.
 - `docs/SIGNING.md` — unsigned beta testing and official signing/notarization.
 
 Future mobile and Android TV builds may reuse the core state machine, with platform-specific frontends. iOS does not support a free-floating overlay across other apps.
 
-**Artwork:** All four approved pixel-art sheets for Liam and Ninoosh are committed as PNG files, processed from the supplied character concept art. Actions are keyed as `[idle, look, sit, groom, nap, play, jump, happy]` in 4×2 order. Walk uses eight separate frames. Non-walk actions currently show one approved pose each; full multi-frame action animations remain a future step.
+**Artwork:** Character sprite sheets are committed as PNG files and normalized with transparent frame padding. Actions are keyed as `[idle, look, sit, groom, nap, play, jump, happy]` in 4×2 order. Walk uses eight separate frames. Non-walk actions currently show one approved pose each; full multi-frame action animations remain a future step.
 
 Copyright © 2026 DPet contributors. All rights reserved until a license is explicitly selected.
 
@@ -75,3 +75,7 @@ DPet provides **x86_64/amd64** packages; both formats require a graphical deskto
 - **AppImage:** download `DPet-*-linux-x86_64.AppImage`, run `chmod +x DPet-*-linux-x86_64.AppImage`, then `./DPet-*-linux-x86_64.AppImage`. On distributions with missing FUSE 2 runtime, prefer the .deb instead of changing system security settings.
 
 **Desktop limitation:** DPet uses transparent topmost windows and a tray icon. GNOME/Wayland compositors may restrict window positioning and always-on-top behavior; an **X11 desktop session** (or XWayland where supported) is recommended. This CI build validates packaging but does not exercise every Ubuntu compositor in a real interactive session.
+
+## Toto and Chico
+
+Toto is the entirely yellow cockatiel. Chico is the gray cockatiel with yellow crest/face and white wing patches. Both have separate eight-frame walk and action atlases. All six characters are selectable in the Tray > Pets menu. Existing saved pet preferences are preserved; new companions are enabled by default. The built-in update checker is unchanged.

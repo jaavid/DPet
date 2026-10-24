@@ -1,7 +1,7 @@
 {
   "name": "dpet",
-  "version": "0.3.1",
-  "description": "DPet — Liam, Ninoosh, Ozy & Slash: desktop cat companions",
+  "version": "0.4.0",
+  "description": "DPet — Four cats and two cockatiels (Liam, Ninoosh, Ozy, Slash, Toto and Chico)",
   "private": true,
   "type": "module",
   "main": "dist-electron/main.cjs",
@@ -105,8 +105,8 @@
     },
     "linux": {
       "category": "Game",
-      "synopsis": "Four curious desktop cat companions",
-      "description": "Liam, Ninoosh, Ozy and Slash roam, nap and play on your desktop.",
+      "synopsis": "Six animated desktop companions",
+      "description": "Four cats and two cockatiels roam, rest and play on your desktop.",
       "icon": "build/icon.png",
       "target": [
         {

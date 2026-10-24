@@ -94,11 +94,13 @@ function doAction(id:PetId,activity:Activity):void{
 function makeMenu():Menu{
  const activityItems=(id:PetId):Electron.MenuItemConstructorOptions[]=>
   (['walk','sit','groom','nap','play','look','jump','happy'] as Activity[]).map(activity=>({
-   label:activity[0].toUpperCase()+activity.slice(1),
+   label:PROFILES[id].species==='cockatiel'
+    ?({walk:'Walk',sit:'Perch',groom:'Preen',nap:'Rest',play:'Bow',look:'Look around',jump:'Hop',happy:'Spread wings'} as Record<Exclude<Activity,'idle'>,string>)[activity as Exclude<Activity,'idle'>]
+    :activity[0].toUpperCase()+activity.slice(1),
    click:()=>doAction(id,activity)
   }));
  return Menu.buildFromTemplate([
-  {label:'DPet • Liam, Ninoosh, Ozy & Slash',enabled:false},
+  {label:'DPet • Six companions (four cats and two birds)',enabled:false},
   {type:'separator'},
   {label:settings.paused?'Resume roaming':'Pause roaming',click:()=>{settings.paused=!settings.paused;persist();updateMenu();}},
   {label:'Pets',submenu:IDS.map(id=>({
@@ -210,7 +212,7 @@ function startApp():void{
  loadSettings();
  const image=nativeImage.createFromPath(spritePath('liam'));
  const icon=image.isEmpty()?nativeImage.createEmpty():image.crop({x:0,y:0,width:80,height:80}).resize({width:22,height:22});
- tray=new Tray(icon);tray.setToolTip('DPet · Four desktop cats');updateMenu();
+ tray=new Tray(icon);tray.setToolTip('DPet · Six desktop companions');updateMenu();
  tray.on('double-click',()=>pat('liam'));
  for(const id of IDS)makePet(id);
  updates=new UpdateService(updateMenu,()=>settings.autoCheckUpdates);

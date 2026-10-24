@@ -91,16 +91,17 @@ function draw(now:number):void{
   if(!desktop)canvas.style.transform='translateX('+Math.round(s.x)+'px)';
   const ctx=contexts.get(id)!;ctx.clearRect(0,0,80,80);
   ctx.save();
-  if(s.direction===-1){ctx.translate(80,0);ctx.scale(-1,1);}
+  const flip=PROFILES[id].species==='cockatiel'?s.direction===1:s.direction===-1;
+  if(flip){ctx.translate(80,0);ctx.scale(-1,1);}
   const t=now-(clocks.get(id)??now);
-  const frame=spriteFrame(s.activity,t);
+  const frame=spriteFrame(s.activity,t,s.id);
   const key=id+'/'+(s.activity==='walk'?'walk':'actions');
   const sprite=spriteFrames.get(key)?.[frame];
   if(sprite){
    ctx.drawImage(sprite,0,0,SPRITE.size,SPRITE.size);
   }else{
    // Fallback when assets have not loaded.
-   ctx.fillStyle=id==='liam'?'#f5ead9':id==='slash'?'#e9a665':id==='ozy'?'#b1adb0':'#d6c5af';
+   ctx.fillStyle=id==='toto'?'#ffe4a5':id==='chico'?'#706d70':id==='liam'?'#f5ead9':id==='slash'?'#e9a665':id==='ozy'?'#b1adb0':'#d6c5af';
    ctx.beginPath();ctx.ellipse(40,51,29,21,0,0,Math.PI*2);ctx.fill();
   }
   ctx.restore();

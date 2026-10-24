@@ -11,7 +11,7 @@ mkdirSync(pub,{recursive:true});mkdirSync(build,{recursive:true});
 // Retain original Liam image for application branding; normalized atlas is for animation only.
 const liam=readFileSync(path.join(root,'assets','sprite-sheets','liam-walk.png'));
 // Sprite sheets are versioned artwork. Never overwrite them with procedural placeholders.
-const atlasNames=['liam-walk','liam-actions','ninoosh-walk','ninoosh-actions','ozy-walk','ozy-actions','slash-walk','slash-actions'];
+const atlasNames=['liam-walk','liam-actions','ninoosh-walk','ninoosh-actions','ozy-walk','ozy-actions','slash-walk','slash-actions','toto-walk','toto-actions','chico-walk','chico-actions'];
 for(const name of atlasNames){
  const input=path.join(root,'assets','sprite-sheets',name+'.png');
  const file=readFileSync(input);
