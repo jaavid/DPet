@@ -36,6 +36,11 @@ jobs:
     runs-on: ${{ matrix.os }}
     env:
       CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+      CSC_LINK: ${{ matrix.platform == 'mac' && secrets.MAC_CSC_LINK || secrets.WIN_CSC_LINK }}
+      CSC_KEY_PASSWORD: ${{ matrix.platform == 'mac' && secrets.MAC_CSC_PASSWORD || secrets.WIN_CSC_PASSWORD }}
+      APPLE_ID: ${{ secrets.APPLE_ID }}
+      APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+      APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -43,6 +48,10 @@ jobs:
           node-version: '22'
       - name: Install
         run: npm install --no-audit --no-fund
+      - name: Apply version to package
+        shell: bash
+        run: |
+          node -e 'const fs=require("fs");const p=JSON.parse(fs.readFileSync("package.json","utf8"));p.version=process.env.GITHUB_REF_TYPE==="tag"?process.env.GITHUB_REF_NAME.replace(/^v/,""):p.version+"-beta."+process.env.GITHUB_RUN_NUMBER;fs.writeFileSync("package.json",JSON.stringify(p,null,2)+"\n");console.log("Packaging",p.version)'
       - name: Build desktop installer
         run: npm run dist:${{ matrix.platform }}
       - name: Upload installers
@@ -81,7 +90,7 @@ jobs:
             tag="$REF_NAME"
             args=()
           else
-            tag="v0.1.0-beta.$RUN_NUMBER"
+            tag="v$(node -p "require('./package.json').version")-beta.$RUN_NUMBER"
             args=(--prerelease)
           fi
           mapfile -d '' files < <(find downloaded -maxdepth 1 -type f \( -name '*.exe' -o -name '*.dmg' -o -name '*.zip' \) -print0)
