@@ -4,9 +4,11 @@ import {execFileSync} from 'node:child_process';
 import path from 'node:path';
 import os from 'node:os';
 import sharp from 'sharp';
+import {normalizeAtlas} from './normalize-atlas.mjs';
 const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
 const pub=path.join(root,'public/assets'),build=path.join(root,'build');
 mkdirSync(pub,{recursive:true});mkdirSync(build,{recursive:true});
+// Retain original Liam image for application branding; normalized atlas is for animation only.
 const liam=readFileSync(path.join(root,'assets','sprite-sheets','liam-walk.png'));
 // Sprite sheets are versioned artwork. Never overwrite them with procedural placeholders.
 const atlasNames=['liam-walk','liam-actions','ninoosh-walk','ninoosh-actions'];
@@ -17,7 +19,8 @@ for(const name of atlasNames){
  if(meta.width!==320||meta.height!==160||!meta.hasAlpha){
   throw new Error('Bad sprite atlas '+name+': expected 320x160 transparent PNG');
  }
- writeFileSync(path.join(pub,name+'.png'),file);
+ const normalized=await normalizeAtlas(file,name.endsWith('walk')?'walk':'actions');
+ writeFileSync(path.join(pub,name+'.png'),normalized);
 }
 const background=Buffer.from('<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024"><defs><linearGradient id="g" x1="0" x2="1" y1="0" y2="1"><stop stop-color="#163941"/><stop offset="1" stop-color="#4a8b79"/></linearGradient></defs><rect x="18" y="18" width="988" height="988" rx="235" fill="url(#g)"/><circle cx="512" cy="500" r="353" fill="#ffffff" opacity=".07"/><circle cx="777" cy="237" r="45" fill="#edcd7c"/></svg>');
 const portrait=await sharp(liam).extract({left:0,top:0,width:80,height:80}).resize(750,750,{kernel:'nearest'}).png().toBuffer();
@@ -41,4 +44,4 @@ if(process.platform==='darwin'){
  execFileSync('iconutil',['-c','icns','-o',path.join(build,'icon.icns'),dir]);
  rmSync(tmp,{recursive:true,force:true});
 }
-console.log('DPet prepared: four approved sprite atlases and branded macOS/Windows icons');
+console.log('DPet prepared: isolated, padded sprite frames and branded macOS/Windows icons');
