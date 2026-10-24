@@ -122,7 +122,10 @@
           ]
         }
       ],
-      "artifactName": "DPet-${version}-linux-${arch}.${ext}"
+      "artifactName": "DPet-${version}-linux-${arch}.${ext}",
+      "maintainer": "DPet contributors <1959108+jaavid@users.noreply.github.com>",
+      "syncDesktopName": true,
+      "executableName": "dpet"
     }
   },
   "repository": {
@@ -131,5 +134,6 @@
   },
   "dependencies": {
     "electron-updater": "^6.6.2"
-  }
+  },
+  "desktopName": "app.dpet.desktop"
 }

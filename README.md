@@ -61,7 +61,8 @@ Copyright © 2026 DPet contributors. All rights reserved until a license is expl
 DPet checks public GitHub Releases when launched, then approximately every four hours (switchable from **Tray → Updates**). When a newer beta is published, a desktop notification and tray action appear; no manual version checking is required.
 
 - **Windows installer (NSIS):** uses `electron-updater` to download SHA-512-verified update packages, and installs them after the app quits or from **Restart to install downloaded update**. The Portable edition is not a supported in-place auto-update target.
-- **Linux (.deb/AppImage):** detects new GitHub Releases automatically and links to the Linux .deb; update installation is manual (not apt-backed by default).\n- **Unsigned macOS beta:** shows the new version and takes you to the correct GitHub Release to install manually. Apple's Squirrel.Mac updater requires a signed app; without an Apple Developer ID certificate this cannot safely auto-replace the app. No account is required to build or test DPet.
+- **Linux (.deb/AppImage):** detects new GitHub Releases automatically and links to the Linux .deb; update installation is manual (not apt-backed by default).
+- **Unsigned macOS beta:** shows the new version and takes you to the correct GitHub Release to install manually. Apple's Squirrel.Mac updater requires a signed app; without an Apple Developer ID certificate this cannot safely auto-replace the app. No account is required to build or test DPet.
 - **After signing/notarization:** native macOS updater support can be enabled by the same release metadata.
 
 DPet only checks releases when update checks are enabled. No telemetry, account, or updater service beyond GitHub is required.
@@ -70,7 +71,7 @@ DPet only checks releases when update checks are enabled. No telemetry, account,
 
 DPet provides **x86_64/amd64** packages; both formats require a graphical desktop session:
 
-- **Debian / Ubuntu:** download `DPet-*-linux-x64.deb`, then install with `sudo apt install ./DPet-*-linux-x64.deb` in the download directory. Launch from the application menu or `dpet`.
-- **AppImage:** download `DPet-*-linux-x64.AppImage`, run `chmod +x DPet-*-linux-x64.AppImage`, then `./DPet-*-linux-x64.AppImage`. On distributions with missing FUSE 2 runtime, prefer the .deb instead of changing system security settings.
+- **Debian / Ubuntu:** download `DPet-*-linux-amd64.deb`, then install with `sudo apt install ./DPet-*-linux-amd64.deb` in the download directory. Launch from the application menu or `dpet`.
+- **AppImage:** download `DPet-*-linux-x86_64.AppImage`, run `chmod +x DPet-*-linux-x86_64.AppImage`, then `./DPet-*-linux-x86_64.AppImage`. On distributions with missing FUSE 2 runtime, prefer the .deb instead of changing system security settings.
 
 **Desktop limitation:** DPet uses transparent topmost windows and a tray icon. GNOME/Wayland compositors may restrict window positioning and always-on-top behavior; an **X11 desktop session** (or XWayland where supported) is recommended. This CI build validates packaging but does not exercise every Ubuntu compositor in a real interactive session.

@@ -74,7 +74,11 @@ export class UpdateService{
    const isInstaller=(name:string):boolean=>{
      if(process.platform==='win32')return name==='DPet-Setup-'+app.getVersion().replace(/-beta\..*$/,'')+'-'+architecture+'.exe'||/^DPet-Setup-.*-x64\.exe$/.test(name);
      if(process.platform==='darwin')return name.endsWith('-mac-'+architecture+'.dmg');
-     if(process.platform==='linux')return name.endsWith('-linux-'+architecture+'.deb')||name.endsWith('-linux-'+architecture+'.AppImage');
+     if(process.platform==='linux'){
+       const debArch=architecture==='x64'?'amd64':'arm64';
+       const appImageArch=architecture==='x64'?'x86_64':'aarch64';
+       return name.endsWith('-linux-'+debArch+'.deb')||name.endsWith('-linux-'+appImageArch+'.AppImage');
+     }
      return false;
    };
    const release=releases.find(r=>!r.draft&&
@@ -83,7 +87,8 @@ export class UpdateService{
     (r.assets?.some(a=>isInstaller(a.name))??false)
    );
    if(release){
-    const suffix=process.platform==='linux'?'-linux-'+architecture+'.deb':
+    const debArch=architecture==='x64'?'amd64':'arm64';
+    const suffix=process.platform==='linux'?'-linux-'+debArch+'.deb':
       '-mac-'+architecture+'.dmg';
     const asset=release.assets?.find(a=>a.name.endsWith(suffix)&&
       a.browser_download_url.startsWith(DOWNLOADS+'/download/'));
