@@ -1,19 +1,21 @@
 import { app, BrowserWindow, Menu, Tray, nativeImage, ipcMain, screen } from 'electron';
 import {readFileSync,writeFileSync,existsSync} from 'node:fs';
 import path from 'node:path';
+import {UpdateService} from './updater';
 import {petBounds} from '../src/core/windowGeometry';
 import {
  advancePet, initialPet, petCat, triggerActivity, greetNearby, clamp, sanitizeSettings,
- DEFAULT_SETTINGS, PROFILES, type PetId, type PetState, type Settings, type Activity,
+ DEFAULT_SETTINGS, PROFILES, PET_IDS, type PetId, type PetState, type Settings, type Activity,
  type Placement
 } from '../src/core/behavior';
-const IDS:PetId[]=['liam','ninoosh'];
+const IDS:PetId[]=[...PET_IDS];
 type PetRuntime={window:BrowserWindow,state:PetState,displayId:number,mask:Uint8Array|null,acceptsClick:boolean};
 const pets=new Map<PetId,PetRuntime>();
 let tray:Tray|null=null;
 let settings:Settings={...DEFAULT_SETTINGS,enabled:{...DEFAULT_SETTINGS.enabled}};
 let tickTimer:NodeJS.Timeout|null=null;
 let lastTick=Date.now();
+let updates:UpdateService|null=null;
 function spritePath(id:PetId):string{
  const file=id+'-walk.png';
  const packaged=path.join(__dirname,'../dist/assets',file);
@@ -96,7 +98,7 @@ function makeMenu():Menu{
    click:()=>doAction(id,activity)
   }));
  return Menu.buildFromTemplate([
-  {label:'DPet • Liam & Ninoosh',enabled:false},
+  {label:'DPet • Liam, Ninoosh, Ozy & Slash',enabled:false},
   {type:'separator'},
   {label:settings.paused?'Resume roaming':'Pause roaming',click:()=>{settings.paused=!settings.paused;persist();updateMenu();}},
   {label:'Pets',submenu:IDS.map(id=>({
@@ -123,6 +125,25 @@ function makeMenu():Menu{
   {label:'Playful behavior',type:'checkbox',checked:settings.playful,click:()=>{
    settings.playful=!settings.playful;persist();updateMenu();
   }},
+  {label:'Updates',submenu:[
+   {label:'Automatically check for updates',type:'checkbox',checked:settings.autoCheckUpdates,
+    click:()=>{settings.autoCheckUpdates=!settings.autoCheckUpdates;persist();updateMenu();}},
+   {label:(()=>{
+    const u=updates?.status;
+    if(!u||u.phase==='idle')return 'Current version: '+app.getVersion();
+    if(u.phase==='checking')return 'Checking GitHub…';
+    if(u.phase==='up-to-date')return 'Up to date: '+app.getVersion();
+    if(u.phase==='available')return 'New version: '+u.version;
+    if(u.phase==='downloading')return 'Downloading update: '+u.version;
+    if(u.phase==='downloaded')return 'Ready to install: '+u.version;
+    return 'Unable to check for updates';
+   })(),enabled:false},
+   {label:'Check for updates now',click:()=>{void updates?.check(true);}},
+   {label:process.platform==='darwin'?'Download update (macOS requires manual install)':'Open latest release',
+    click:()=>updates?.openRelease()},
+   {label:'Restart to install downloaded update',visible:process.platform==='win32',
+    enabled:updates?.status.phase==='downloaded',click:()=>updates?.installDownloaded()}
+  ]},
   {type:'separator'},
   ...IDS.map(id=>({label:PROFILES[id].name+' actions',submenu:[
    {label:'Pet '+PROFILES[id].name,click:()=>pat(id)},...activityItems(id)
@@ -163,11 +184,13 @@ function tick():void{
   const p=pets.get(id);if(!p||p.window.isDestroyed()||!settings.enabled[id])continue;
   if(!settings.paused)p.state=advancePet(p.state,dt,Math.max(0,getWorkArea(id).width-settings.size),Math.random,settings.playful);
  }
- const a=pets.get('liam'),b=pets.get('ninoosh');
- if(a&&b&&settings.enabled.liam&&settings.enabled.ninoosh&&!settings.paused){
-  // Only greet on the same display.
-  if(a.displayId===b.displayId){
-   const [aa,bb]=greetNearby(a.state,b.state);a.state=aa;b.state=bb;
+ if(!settings.paused){
+  const visible=IDS.map(id=>pets.get(id)).filter((p):p is PetRuntime=>!!p&&settings.enabled[p.state.id]);
+  for(let i=0;i<visible.length;i++)for(let j=i+1;j<visible.length;j++){
+   const a=visible[i],b=visible[j];
+   if(a.displayId!==b.displayId)continue;
+   const [one,two]=greetNearby(a.state,b.state);
+   a.state=one;b.state=two;
   }
  }
  const cursor=screen.getCursorScreenPoint();
@@ -186,9 +209,11 @@ function startApp():void{
  loadSettings();
  const image=nativeImage.createFromPath(spritePath('liam'));
  const icon=image.isEmpty()?nativeImage.createEmpty():image.crop({x:0,y:0,width:80,height:80}).resize({width:22,height:22});
- tray=new Tray(icon);tray.setToolTip('DPet · Liam & Ninoosh');updateMenu();
+ tray=new Tray(icon);tray.setToolTip('DPet · Four desktop cats');updateMenu();
  tray.on('double-click',()=>pat('liam'));
  for(const id of IDS)makePet(id);
+ updates=new UpdateService(updateMenu,()=>settings.autoCheckUpdates);
+ updates.start();
  ipcMain.on('dpet:ready',(event)=>{
   for(const p of pets.values())if(p.window.webContents.id===event.sender.id)event.sender.send('dpet:state',p.state);
  });
@@ -206,6 +231,6 @@ else{
   if(process.platform==='win32')app.setAppUserModelId('app.dpet.desktop');
   startApp();
  }).catch(console.error);
- app.on('before-quit',()=>{if(tickTimer)clearInterval(tickTimer);persist();});
+ app.on('before-quit',()=>{if(tickTimer)clearInterval(tickTimer);updates?.stop();persist();});
  app.on('window-all-closed',()=>app.quit());
 }
