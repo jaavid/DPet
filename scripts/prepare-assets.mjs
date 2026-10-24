@@ -1,0 +1,11 @@
+import { readFileSync, mkdirSync, writeFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+import path from 'node:path';
+const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const source = path.join(root, 'assets', 'liam-walk.png.b64');
+const output = path.join(root, 'public', 'assets', 'liam-walk.png');
+mkdirSync(path.dirname(output), { recursive: true });
+const binary = Buffer.from(readFileSync(source, 'utf8').trim(), 'base64');
+if (binary.toString('hex', 0, 8) !== '89504e470d0a1a0a') throw new Error('Sprite asset must be a PNG');
+writeFileSync(output, binary);
+console.log('Prepared Liam walking atlas (' + binary.length + ' bytes)');

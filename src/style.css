@@ -1,0 +1,15 @@
+* { box-sizing: border-box; }
+html, body, #app { width: 100%; height: 100%; margin: 0; }
+body { overflow: hidden; color: #173932; font: 500 15px/1.5 system-ui, -apple-system, sans-serif; }
+#liam { display: block; width: 220px; height: 220px; image-rendering: pixelated; cursor: pointer; }
+.desktop, .desktop #app { background: transparent !important; }
+.desktop #liam { position: absolute; left: 0; top: 0; }
+.desktop #controls, .desktop #hint { display: none; }
+.preview { background: radial-gradient(ellipse at 40% 30%, #dcefc3, transparent 50%), linear-gradient(#a7d5d0 0%, #d8eac8 73%, #81b969 73%, #4b8c56 100%); }
+.preview #app::before { content: 'DPet • Liam’s little world'; position: absolute; top: 28px; left: 30px; color: #29574b; font-weight: 700; font-size: 22px; letter-spacing: -.05em; }
+.preview #liam { position: absolute; bottom: 12%; left: 40%; filter: drop-shadow(1px 6px 2px #416b3c45); }
+.preview #controls { position: absolute; display: flex; gap: 12px; align-items: center; right: 24px; top: 24px; padding: 12px 16px; border-radius: 16px; background: #ffffffd9; box-shadow: 0 8px 28px #2b4a3a22; }
+.preview #controls span { font-weight: 700; }
+.preview button { background: #245849; color: white; border: 0; border-radius: 9px; padding: 8px 12px; cursor: pointer; }
+.preview button:hover { background: #163e36; }
+.preview #hint { position: absolute; left: 30px; bottom: 28px; background: #fffa; border-radius: 9px; padding: 8px 12px; }
