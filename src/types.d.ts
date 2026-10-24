@@ -1,11 +1,11 @@
-import type { PetState } from './core/behavior';
+import type {PetId,PetState} from './core/behavior';
 export {};
-declare global {
-  interface Window {
-    dpet?: {
-      onState: (listener: (state: PetState) => void) => () => void;
-      onPat: (listener: () => void) => () => void;
-      pat: () => void;
-    };
-  }
+declare global{
+ interface Window{
+  dpet?: {
+   onState:(fn:(pet:PetState)=>void)=>()=>void;
+   onPat:(fn:()=>void)=>()=>void;
+   pat:(id:PetId)=>void;
+  };
+ }
 }

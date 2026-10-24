@@ -2,7 +2,8 @@ node_modules/
 dist/
 dist-electron/
 release/
-public/assets/liam-walk.png
+public/assets/*.png
+build/icon.*
 *.log
 .DS_Store
 .vscode/
