@@ -1,7 +1,7 @@
 {
   "name": "dpet",
-  "version": "0.2.2",
-  "description": "DPet — Liam & Ninoosh, two playful desktop companions",
+  "version": "0.3.0",
+  "description": "DPet — Liam, Ninoosh, Ozy & Slash: desktop cat companions",
   "private": true,
   "type": "module",
   "main": "dist-electron/main.cjs",
@@ -14,7 +14,7 @@
     "dev": "npm run assets && npm run build:electron && concurrently -k \"vite --host 127.0.0.1\" \"wait-on http://127.0.0.1:5173 && electron .\"",
     "typecheck": "tsc --noEmit",
     "test": "npm run assets && vitest run",
-    "build:electron": "esbuild electron/main.ts --bundle --platform=node --target=node22 --format=cjs --external:electron --outfile=dist-electron/main.cjs && esbuild electron/preload.ts --bundle --platform=node --target=node22 --format=cjs --external:electron --outfile=dist-electron/preload.cjs",
+    "build:electron": "esbuild electron/main.ts --bundle --platform=node --target=node22 --format=cjs --external:electron --external:electron-updater --outfile=dist-electron/main.cjs && esbuild electron/preload.ts --bundle --platform=node --target=node22 --format=cjs --external:electron --outfile=dist-electron/preload.cjs",
     "build": "npm run assets && npm run typecheck && vite build && npm run build:electron",
     "dist:mac": "npm run build && electron-builder --mac dmg zip --x64 --arm64 --publish never",
     "dist:win": "npm run build && electron-builder --win nsis portable --publish never"
@@ -96,6 +96,18 @@
     "portable": {
       "artifactName": "DPet-Portable-${version}-${arch}.${ext}"
     },
-    "artifactName": "DPet-${version}-${os}-${arch}.${ext}"
+    "artifactName": "DPet-${version}-${os}-${arch}.${ext}",
+    "publish": {
+      "provider": "github",
+      "owner": "jaavid",
+      "repo": "DPet"
+    }
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jaavid/DPet.git"
+  },
+  "dependencies": {
+    "electron-updater": "^6.6.2"
   }
 }
