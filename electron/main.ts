@@ -127,7 +127,7 @@ if (!app.requestSingleInstanceLock()) app.quit();
 else {
   app.on('second-instance', () => petWindow?.showInactive());
   app.whenReady().then(() => {
-    if (process.platform === 'darwin') app.dock.hide();
+    if (process.platform === 'darwin') app.dock?.hide();
     if (process.platform === 'win32') app.setAppUserModelId('ir.dpet.liam');
     createApp();
   }).catch(console.error);
