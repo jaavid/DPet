@@ -7,12 +7,34 @@ document.body.classList.add(desktop?'desktop':'preview');
 const ids:PetId[]=desktop
  ?[new URLSearchParams(location.search).get('pet')==='ninoosh'?'ninoosh':'liam']
  :['liam','ninoosh'];
-const sprites=new Map<string,HTMLImageElement>();
+/**
+ * Slice each pose into its own private 80x80 canvas once, before playback.
+ * This prevents texture/filter sampling outside the selected sprite cell,
+ * even if a browser or GPU interpolates a spritesheet source rectangle.
+ */
+const spriteFrames=new Map<string,HTMLCanvasElement[]>();
 for(const id of ['liam','ninoosh'] as PetId[]){
  for(const sheet of ['walk','actions']){
-  const img=new Image();
+  const key=id+'/'+sheet, img=new Image();
+  img.onload=()=>{
+    if(img.naturalWidth!==SPRITE.columns*SPRITE.size||img.naturalHeight!==SPRITE.rows*SPRITE.size){
+      console.error('Invalid DPet sprite dimensions:',key,img.naturalWidth,img.naturalHeight);
+      return;
+    }
+    const frames:HTMLCanvasElement[]=[];
+    for(let i=0;i<SPRITE.frames;i++){
+      const frame=document.createElement('canvas');
+      frame.width=SPRITE.size;frame.height=SPRITE.size;
+      const context=frame.getContext('2d',{alpha:true})!;
+      context.imageSmoothingEnabled=false;
+      const rect=spriteSource(i);
+      context.drawImage(img,rect.x,rect.y,rect.width,rect.height,0,0,SPRITE.size,SPRITE.size);
+      frames.push(frame);
+    }
+    spriteFrames.set(key,frames);
+  };
+  img.onerror=()=>console.error('Could not load sprite:',key);
   img.src='./assets/'+id+'-'+sheet+'.png';
-  sprites.set(id+'/'+sheet,img);
  }
 }
 const states=new Map<PetId,PetState>();
@@ -72,10 +94,9 @@ function draw(now:number):void{
   const t=now-(clocks.get(id)??now);
   const frame=spriteFrame(s.activity,t);
   const key=id+'/'+(s.activity==='walk'?'walk':'actions');
-  const sprite=sprites.get(key)!;
-  if(sprite.complete&&sprite.naturalWidth){
-   const rect=spriteSource(frame);
-   ctx.drawImage(sprite,rect.x,rect.y,rect.width,rect.height,0,0,SPRITE.size,SPRITE.size);
+  const sprite=spriteFrames.get(key)?.[frame];
+  if(sprite){
+   ctx.drawImage(sprite,0,0,SPRITE.size,SPRITE.size);
   }else{
    // Fallback when assets have not loaded.
    ctx.fillStyle=id==='liam'?'#f5ead9':'#d6c5af';
