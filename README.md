@@ -19,7 +19,7 @@ Click the **DPet icon** in the Mac menu bar or Windows tray to open settings:
 - **Start position** — left, center, right.
 - **Distance from bottom** — 0, 12, 16, 24, 48 or 80 pixels.
 - **Pause roaming** and **Playful behavior**.
-- **Liam actions / Ninoosh actions** — pet, walk, sit, groom, nap, play, look, jump.
+- **Liam actions / Ninoosh actions** — pet (happy reaction), walk, sit, groom, nap, play, look, jump, happy.
 - **Launch at login** and Quit.
 
 Preferences are saved locally. Each pet has a separate transparent desktop overlay; clicks outside the visible sprite pass through.
@@ -45,11 +45,13 @@ Packaging: `npm run dist:mac` on Mac or `npm run dist:win` on Windows.
 - `src/core/` — platform-independent deterministic behavior engine, with tests.
 - `src/main.ts` — Canvas renderer for desktop and browser.
 - `electron/` — native transparent windows, tray, saved settings and positioning.
-- `scripts/prepare-assets.mjs` — sprite and branded icon generation.
+- `assets/sprite-sheets/` — four versioned, transparent 320×160 PNG atlases (80×80 frame, 4×2 grid).
+- `src/core/spriteAtlas.ts` — shared frame order and mapping to behavior states.
+- `scripts/prepare-assets.mjs` — validates/copies approved atlases and generates branded native icons.
 - `docs/SIGNING.md` — unsigned beta testing and official signing/notarization.
 
 Future mobile and Android TV builds may reuse the core state machine, with platform-specific frontends. iOS does not support a free-floating overlay across other apps.
 
-**Artwork:** Liam's walk uses the existing prototype sprite; Ninoosh and the additional actions are new stylized pixel-like recreations based on the supplied cat photo. Higher-fidelity animation sheets remain a future art task.
+**Artwork:** All four approved pixel-art sheets for Liam and Ninoosh are committed as PNG files, processed from the supplied character concept art. Actions are keyed as `[idle, look, sit, groom, nap, play, jump, happy]` in 4×2 order. Walk uses eight separate frames. Non-walk actions currently show one approved pose each; full multi-frame action animations remain a future step.
 
 Copyright © 2026 DPet contributors. All rights reserved until a license is explicitly selected.

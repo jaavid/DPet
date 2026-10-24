@@ -1,6 +1,6 @@
 {
   "name": "dpet",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "DPet — Liam & Ninoosh, two playful desktop companions",
   "private": true,
   "type": "module",

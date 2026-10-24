@@ -86,7 +86,7 @@ function doAction(id:PetId,activity:Activity):void{
 }
 function makeMenu():Menu{
  const activityItems=(id:PetId):Electron.MenuItemConstructorOptions[]=>
-  (['walk','sit','groom','nap','play','look','jump'] as Activity[]).map(activity=>({
+  (['walk','sit','groom','nap','play','look','jump','happy'] as Activity[]).map(activity=>({
    label:activity[0].toUpperCase()+activity.slice(1),
    click:()=>doAction(id,activity)
   }));

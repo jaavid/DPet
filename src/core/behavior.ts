@@ -1,5 +1,5 @@
 /** Portable DPet simulation — no DOM, OS, Electron or renderer dependencies. */
-export type Activity = 'walk' | 'idle' | 'sit' | 'groom' | 'nap' | 'play' | 'look' | 'jump';
+export type Activity = 'walk' | 'idle' | 'sit' | 'groom' | 'nap' | 'play' | 'look' | 'jump' | 'happy';
 export type Direction = 1 | -1;
 export type PetId = 'liam' | 'ninoosh';
 export type Placement = 'left' | 'center' | 'right';
@@ -42,7 +42,7 @@ export function initialPet(id:PetId,maxX:number,placement:Placement='left'):PetS
   return {id,x:spawnX(placement,maxX,id),direction:id==='liam'?1:-1,activity:'walk',elapsedMs:0,activityMs:2200,affection:0};
 }
 export function petCat(s:PetState):PetState {
-  return {...s,activity:'play',elapsedMs:0,activityMs:1300,affection:s.affection+1};
+  return {...s,activity:'happy',elapsedMs:0,activityMs:1300,affection:s.affection+1};
 }
 export function triggerActivity(s:PetState,activity:Activity):PetState {
   return {...s,activity,elapsedMs:0,activityMs:activity==='nap'?5000:activity==='walk'?2900:1500};
@@ -62,7 +62,7 @@ export function advancePet(
   }
   if(s.elapsedMs>=s.activityMs){
     s.elapsedMs=0;
-    if(s.activity==='play'||s.activity==='jump'||s.activity==='groom') {
+    if(s.activity==='play'||s.activity==='happy'||s.activity==='jump'||s.activity==='groom') {
       s.activity='idle'; s.activityMs=800;
     }else if(s.activity==='nap') {s.activity='sit';s.activityMs=1250;}
     else if(s.activity==='walk'){

@@ -15,7 +15,7 @@ describe('two independent pets',()=>{
     expect(advancePet(a,200,700).x-a.x).toBeGreaterThan(advancePet(b,200,700).x-b.x);
   });
   it('responds to affection and supports named activities',()=>{
-    const a=initialPet('ninoosh',400);expect(petCat(a).activity).toBe('play');
+    const a=initialPet('ninoosh',400);expect(petCat(a).activity).toBe('happy');
     expect(a.affection).toBe(0);expect(triggerActivity(a,'groom').activity).toBe('groom');
   });
   it('greeting does not mutate state',()=>{

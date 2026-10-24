@@ -1,4 +1,5 @@
 import {advancePet,initialPet,petCat,PROFILES,type PetId,type PetState,type Activity} from './core/behavior';
+import {spriteFrame,spriteSource,SPRITE} from './core/spriteAtlas';
 import './style.css';
 const stage=document.querySelector<HTMLElement>('#stage')!;
 const desktop=Boolean(window.dpet);
@@ -54,7 +55,6 @@ for(const id of ['liam','ninoosh'] as PetId[]){
   if(state){states.set(id,petCat(state));clocks.set(id,performance.now());}
  });
 }
-const activityFrames:Record<Activity,number>={walk:0,idle:0,sit:2,groom:3,nap:4,look:5,play:6,jump:7};
 let last=performance.now();
 function draw(now:number):void{
  const elapsed=Math.min(250,now-last);last=now;
@@ -70,12 +70,12 @@ function draw(now:number):void{
   ctx.save();
   if(s.direction===-1){ctx.translate(80,0);ctx.scale(-1,1);}
   const t=now-(clocks.get(id)??now);
-  const frame=s.activity==='walk'?Math.floor(t/120)%8:
-    s.activity==='idle'?Math.floor(t/1100)%2:activityFrames[s.activity];
+  const frame=spriteFrame(s.activity,t);
   const key=id+'/'+(s.activity==='walk'?'walk':'actions');
   const sprite=sprites.get(key)!;
   if(sprite.complete&&sprite.naturalWidth){
-   ctx.drawImage(sprite,(frame%4)*80,Math.floor(frame/4)*80,80,80,0,0,80,80);
+   const rect=spriteSource(frame);
+   ctx.drawImage(sprite,rect.x,rect.y,rect.width,rect.height,0,0,SPRITE.size,SPRITE.size);
   }else{
    // Fallback when assets have not loaded.
    ctx.fillStyle=id==='liam'?'#f5ead9':'#d6c5af';
