@@ -1,136 +1,205 @@
 import { app, BrowserWindow, Menu, Tray, nativeImage, ipcMain, screen } from 'electron';
-import { readFileSync, writeFileSync, existsSync } from 'node:fs';
+import {readFileSync,writeFileSync,existsSync} from 'node:fs';
 import path from 'node:path';
-import { advancePet, initialPet, petLiam, PET_WIDTH, type PetState } from '../src/core/behavior';
-const SIZE = PET_WIDTH;
-const isSupported = process.platform === 'darwin' || process.platform === 'win32';
-let petWindow: BrowserWindow | null = null;
-let tray: Tray | null = null;
-let pet: PetState = initialPet(600);
-let paused = false;
-let allowClicks = false;
-let timer: NodeJS.Timeout | null = null;
-let lastTick = Date.now();
-let alphaMask: Uint8Array | null = null;
-function spritePath(): string {
-  const packaged = path.join(__dirname, '../dist/assets/liam-walk.png');
-  const dev = path.join(app.getAppPath(), 'public/assets/liam-walk.png');
-  return existsSync(packaged) ? packaged : dev;
+import {
+ advancePet, initialPet, petCat, triggerActivity, greetNearby, clamp, sanitizeSettings,
+ DEFAULT_SETTINGS, PROFILES, type PetId, type PetState, type Settings, type Activity,
+ type Placement
+} from '../src/core/behavior';
+const IDS:PetId[]=['liam','ninoosh'];
+type PetRuntime={window:BrowserWindow,state:PetState,mask:Uint8Array|null,acceptsClick:boolean};
+const pets=new Map<PetId,PetRuntime>();
+let tray:Tray|null=null;
+let settings:Settings={...DEFAULT_SETTINGS,enabled:{...DEFAULT_SETTINGS.enabled}};
+let tickTimer:NodeJS.Timeout|null=null;
+let lastTick=Date.now();
+function spritePath(id:PetId):string{
+ const file=id+'-walk.png';
+ const packaged=path.join(__dirname,'../dist/assets',file);
+ return existsSync(packaged)?packaged:path.join(app.getAppPath(),'public/assets',file);
 }
-function settingsPath(): string { return path.join(app.getPath('userData'), 'settings.json'); }
-function restoreSettings(): void {
-  try { const raw = JSON.parse(readFileSync(settingsPath(), 'utf8'));
-    paused = raw.paused === true;
-  } catch { /* first launch */ }
+function settingsPath():string{return path.join(app.getPath('userData'),'settings.json');}
+function loadSettings():void{
+ try{settings=sanitizeSettings(JSON.parse(readFileSync(settingsPath(),'utf8')));}
+ catch{settings={...DEFAULT_SETTINGS,enabled:{...DEFAULT_SETTINGS.enabled}};}
 }
-function saveSettings(): void {
-  try { writeFileSync(settingsPath(), JSON.stringify({ paused }), 'utf8'); } catch { /* non-critical */ }
+function persist():void{
+ try{writeFileSync(settingsPath(),JSON.stringify(settings,null,2),'utf8');}
+ catch(err){console.error('Could not save DPet settings:',err);}
 }
-function buildHitMask(image: Electron.NativeImage): void {
-  const size = image.getSize();
-  if (size.width !== 320 || size.height !== 160) return;
-  const bytes = image.toBitmap(); // Electron RGBA layout; byte 3 is alpha
-  const mask = new Uint8Array(80 * 80);
-  for (let frame = 0; frame < 8; frame++) {
-    const sx = (frame % 4) * 80, sy = Math.floor(frame / 4) * 80;
-    for (let y = 0; y < 80; y++) for (let x = 0; x < 80; x++) {
-      if (bytes[((sy + y) * size.width + sx + x) * 4 + 3] > 100) mask[y * 80 + x] = 1;
-    }
+function getWorkArea(id:PetId):Electron.Rectangle{
+ const current=pets.get(id);
+ return current?screen.getDisplayMatching(current.window.getBounds()).workArea:screen.getPrimaryDisplay().workArea;
+}
+function imageMask(id:PetId):Uint8Array|null{
+ const image=nativeImage.createFromPath(spritePath(id));
+ if(image.isEmpty())return null;
+ const sz=image.getSize();if(sz.width!==320||sz.height!==160)return null;
+ const bytes=image.toBitmap(),mask=new Uint8Array(80*80);
+ for(let i=0;i<8;i++){
+  const ox=(i%4)*80,oy=Math.floor(i/4)*80;
+  for(let y=0;y<80;y++)for(let x=0;x<80;x++){
+   if(bytes[((oy+y)*sz.width+ox+x)*4+3]>100)mask[y*80+x]=1;
   }
-  alphaMask = mask;
+ }
+ return mask;
 }
-function hitTest(point: Electron.Point, bounds: Electron.Rectangle): boolean {
-  const rx = (point.x - bounds.x) * 80 / bounds.width;
-  const ry = (point.y - bounds.y) * 80 / bounds.height;
-  if (rx < 0 || rx >= 80 || ry < 0 || ry >= 80) return false;
-  const x = Math.floor(rx), y = Math.floor(ry);
-  // Fallback only used if an asset cannot be loaded.
-  return alphaMask ? alphaMask[y * 80 + x] === 1 : (x > 7 && x < 75 && y > 12 && y < 76);
+function pointOnPet(point:Electron.Point,pet:PetRuntime):boolean{
+ const r=pet.window.getBounds();
+ const px=Math.floor((point.x-r.x)*80/r.width),py=Math.floor((point.y-r.y)*80/r.height);
+ if(px<0||py<0||px>=80||py>=80)return false;
+ return pet.mask?pet.mask[py*80+px]===1:(px>8&&px<75&&py>8&&py<76);
 }
-function keepOnDisplay(): void {
-  if (!petWindow) return;
-  const display = screen.getDisplayMatching(petWindow.getBounds());
-  const area = display.workArea;
-  pet.x = Math.max(0, Math.min(pet.x, area.width - SIZE));
-  petWindow.setPosition(area.x + Math.round(pet.x), area.y + area.height - SIZE, false);
+function reposition(id:PetId):void{
+ const p=pets.get(id);if(!p||p.window.isDestroyed())return;
+ const area=getWorkArea(id);
+ p.state.x=clamp(p.state.x,0,Math.max(0,area.width-settings.size));
+ p.window.setBounds({
+  x:area.x+Math.round(p.state.x),y:area.y+area.height-settings.size-settings.floorOffset,
+  width:settings.size,height:settings.size
+ },false);
 }
-function tick(): void {
-  if (!petWindow || petWindow.isDestroyed()) return;
-  const now = Date.now(), dt = Math.min(250, now - lastTick); lastTick = now;
-  const area = screen.getDisplayMatching(petWindow.getBounds()).workArea;
-  if (!paused) pet = advancePet(pet, dt, area.width - SIZE);
-  keepOnDisplay();
-  petWindow.webContents.send('dpet:state', pet);
-  // Transparent regions should never block clicks intended for other apps.
-  const overPet = hitTest(screen.getCursorScreenPoint(), petWindow.getBounds());
-  if (allowClicks !== overPet) {
-    allowClicks = overPet;
-    petWindow.setIgnoreMouseEvents(!overPet, { forward: true });
+function moveToPreset():void{
+ for(const id of IDS){
+  const p=pets.get(id);if(!p)continue;
+  p.state=initialPet(id,Math.max(0,getWorkArea(id).width-settings.size),settings.placement);
+  reposition(id);
+ }
+}
+function changeSize(size:number):void{
+ settings.size=size;persist();
+ for(const p of pets.values())p.window.setSize(size,size,false);
+ for(const id of IDS)reposition(id);
+ updateMenu();
+}
+function updateMenu():void{tray?.setContextMenu(makeMenu());}
+function pat(id:PetId):void{
+ const pet=pets.get(id);if(!pet)return;
+ pet.state=petCat(pet.state);
+ pet.window.webContents.send('dpet:state',pet.state);
+ pet.window.webContents.send('dpet:pat');
+}
+function doAction(id:PetId,activity:Activity):void{
+ const pet=pets.get(id);if(!pet)return;
+ pet.state=triggerActivity(pet.state,activity);
+ pet.window.webContents.send('dpet:state',pet.state);
+}
+function makeMenu():Menu{
+ const activityItems=(id:PetId):Electron.MenuItemConstructorOptions[]=>
+  (['walk','sit','groom','nap','play','look','jump'] as Activity[]).map(activity=>({
+   label:activity[0].toUpperCase()+activity.slice(1),
+   click:()=>doAction(id,activity)
+  }));
+ return Menu.buildFromTemplate([
+  {label:'DPet • Liam & Ninoosh',enabled:false},
+  {type:'separator'},
+  {label:settings.paused?'Resume roaming':'Pause roaming',click:()=>{settings.paused=!settings.paused;persist();updateMenu();}},
+  {label:'Pets',submenu:IDS.map(id=>({
+   label:PROFILES[id].name,type:'checkbox',checked:settings.enabled[id],
+   click:()=>{
+    settings.enabled[id]=!settings.enabled[id];persist();
+    const p=pets.get(id);
+    if(settings.enabled[id])p?.window.showInactive();else p?.window.hide();
+    updateMenu();
+   }
+  }))},
+  {label:'Size',submenu:[100,120,140,160,180].map(size=>({
+   label:size===100?'Tiny · 100 px':size===120?'Small · 120 px':size===140?'Medium · 140 px':size===160?'Large · 160 px':'Extra large · 180 px',
+   type:'radio' as const,checked:settings.size===size,click:()=>changeSize(size)
+  }))},
+  {label:'Start position',submenu:(['left','center','right'] as Placement[]).map(placement=>({
+   label:placement[0].toUpperCase()+placement.slice(1),type:'radio' as const,checked:settings.placement===placement,
+   click:()=>{settings.placement=placement;persist();moveToPreset();updateMenu();}
+  }))},
+  {label:'Distance from bottom',submenu:[0,12,16,24,48,80].map(offset=>({
+   label:offset+' px',type:'radio' as const,checked:settings.floorOffset===offset,
+   click:()=>{settings.floorOffset=offset;persist();for(const id of IDS)reposition(id);updateMenu();}
+  }))},
+  {label:'Playful behavior',type:'checkbox',checked:settings.playful,click:()=>{
+   settings.playful=!settings.playful;persist();updateMenu();
+  }},
+  {type:'separator'},
+  ...IDS.map(id=>({label:PROFILES[id].name+' actions',submenu:[
+   {label:'Pet '+PROFILES[id].name,click:()=>pat(id)},...activityItems(id)
+  ]})),
+  {type:'separator'},
+  {label:'Launch at login',type:'checkbox',checked:app.getLoginItemSettings().openAtLogin,enabled:app.isPackaged,
+   click:(item)=>app.setLoginItemSettings({openAtLogin:item.checked})},
+  {label:'Quit DPet',click:()=>app.quit()}
+ ]);
+}
+function makePet(id:PetId):void{
+ const area=screen.getPrimaryDisplay().workArea;
+ const s=initialPet(id,Math.max(0,area.width-settings.size),settings.placement);
+ const win=new BrowserWindow({
+  width:settings.size,height:settings.size,
+  x:area.x+Math.round(s.x),y:area.y+area.height-settings.size-settings.floorOffset,
+  transparent:true,frame:false,resizable:false,fullscreenable:false,hasShadow:false,
+  skipTaskbar:true,alwaysOnTop:true,show:false,backgroundColor:'#00000000',
+  webPreferences:{
+   preload:path.join(__dirname,'preload.cjs'),contextIsolation:true,
+   nodeIntegration:false,sandbox:true
   }
+ });
+ win.setAlwaysOnTop(true,'floating');
+ win.setVisibleOnAllWorkspaces(true,{visibleOnFullScreen:false});
+ win.setIgnoreMouseEvents(true,{forward:true});
+ win.webContents.setWindowOpenHandler(()=>({action:'deny'}));
+ const runtime:PetRuntime={window:win,state:s,mask:imageMask(id),acceptsClick:false};
+ pets.set(id,runtime);
+ win.once('ready-to-show',()=>{if(settings.enabled[id])win.showInactive();});
+ const query={pet:id};
+ if(app.isPackaged)void win.loadFile(path.join(__dirname,'../dist/index.html'),{query});
+ else void win.loadURL('http://127.0.0.1:5173/?pet='+id);
+ win.webContents.on('did-finish-load',()=>win.webContents.send('dpet:state',runtime.state));
 }
-function menu(): Electron.Menu {
-  return Menu.buildFromTemplate([
-    { label: paused ? 'Let Liam roam' : 'Pause Liam', click: () => { paused = !paused; saveSettings(); updateTray(); } },
-    { label: 'Pet Liam', click: () => pat() },
-    { label: 'Turn around', click: () => { pet.direction = pet.direction === 1 ? -1 : 1; pet.activity = 'walk'; pet.elapsedMs = 0; pet.activityMs = 2400; } },
-    { type: 'separator' },
-    { label: 'Launch at login', type: 'checkbox', checked: app.getLoginItemSettings().openAtLogin, enabled: app.isPackaged && isSupported,
-      click: (item) => app.setLoginItemSettings({ openAtLogin: item.checked }) },
-    { type: 'separator' },
-    { label: 'Quit DPet', click: () => app.quit() }
-  ]);
-}
-function updateTray(): void { tray?.setContextMenu(menu()); }
-function pat(): void {
-  pet = petLiam(pet);
-  petWindow?.webContents.send('dpet:pat');
-  petWindow?.webContents.send('dpet:state', pet);
-}
-function createApp(): void {
-  restoreSettings();
-  const area = screen.getPrimaryDisplay().workArea;
-  pet = initialPet(Math.max(0, area.width - SIZE));
-  const atlas = nativeImage.createFromPath(spritePath());
-  if (!atlas.isEmpty()) buildHitMask(atlas);
-  const icon = atlas.isEmpty() ? nativeImage.createEmpty() : atlas.crop({x:0,y:0,width:80,height:80}).resize({width:32,height:32});
-  if (!icon.isEmpty()) {
-    tray = new Tray(icon);
-    tray.setToolTip('DPet · Liam');
-    updateTray();
-    tray.on('double-click', () => pat());
+function tick():void{
+ const now=Date.now(),dt=Math.min(250,now-lastTick);lastTick=now;
+ for(const id of IDS){
+  const p=pets.get(id);if(!p||p.window.isDestroyed()||!settings.enabled[id])continue;
+  if(!settings.paused)p.state=advancePet(p.state,dt,Math.max(0,getWorkArea(id).width-settings.size),Math.random,settings.playful);
+ }
+ const a=pets.get('liam'),b=pets.get('ninoosh');
+ if(a&&b&&settings.enabled.liam&&settings.enabled.ninoosh&&!settings.paused){
+  // Only greet on the same display.
+  if(screen.getDisplayMatching(a.window.getBounds()).id===screen.getDisplayMatching(b.window.getBounds()).id){
+   const [aa,bb]=greetNearby(a.state,b.state);a.state=aa;b.state=bb;
   }
-  petWindow = new BrowserWindow({
-    width:SIZE, height:SIZE, x:area.x+Math.round(pet.x),
-    y:area.y+area.height-SIZE, frame:false, transparent:true,
-    resizable:false, fullscreenable:false, hasShadow:false,
-    skipTaskbar:true, alwaysOnTop:true, show:false, backgroundColor:'#00000000',
-    webPreferences: {
-      preload:path.join(__dirname,'preload.cjs'), contextIsolation:true,
-      nodeIntegration:false, sandbox:true
-    }
-  });
-  petWindow.setAlwaysOnTop(true, 'floating');
-  petWindow.setVisibleOnAllWorkspaces(true, {visibleOnFullScreen:false});
-  petWindow.setIgnoreMouseEvents(true, {forward:true});
-  petWindow.webContents.setWindowOpenHandler(() => ({ action:'deny' }));
-  const isDev = !app.isPackaged;
-  if (isDev) void petWindow.loadURL('http://127.0.0.1:5173/');
-  else void petWindow.loadFile(path.join(__dirname,'../dist/index.html'));
-  petWindow.once('ready-to-show', () => petWindow?.showInactive());
-  petWindow.webContents.on('did-finish-load', () => petWindow?.webContents.send('dpet:state', pet));
-  ipcMain.on('dpet:ready', () => petWindow?.webContents.send('dpet:state', pet));
-  ipcMain.on('dpet:pat', pat);
-  screen.on('display-metrics-changed', keepOnDisplay);
-  lastTick = Date.now(); timer = setInterval(tick, 60);
+ }
+ const cursor=screen.getCursorScreenPoint();
+ for(const id of IDS){
+  const p=pets.get(id);if(!p||p.window.isDestroyed()||!settings.enabled[id])continue;
+  reposition(id);
+  p.window.webContents.send('dpet:state',p.state);
+  const inside=pointOnPet(cursor,p);
+  if(inside!==p.acceptsClick){
+   p.acceptsClick=inside;
+   p.window.setIgnoreMouseEvents(!inside,{forward:true});
+  }
+ }
 }
-if (!app.requestSingleInstanceLock()) app.quit();
-else {
-  app.on('second-instance', () => petWindow?.showInactive());
-  app.whenReady().then(() => {
-    if (process.platform === 'darwin') app.dock?.hide();
-    if (process.platform === 'win32') app.setAppUserModelId('ir.dpet.liam');
-    createApp();
-  }).catch(console.error);
-  app.on('before-quit', () => { if (timer) clearInterval(timer); saveSettings(); });
-  app.on('window-all-closed', () => app.quit());
+function startApp():void{
+ loadSettings();
+ const image=nativeImage.createFromPath(spritePath('liam'));
+ const icon=image.isEmpty()?nativeImage.createEmpty():image.crop({x:0,y:0,width:80,height:80}).resize({width:22,height:22});
+ tray=new Tray(icon);tray.setToolTip('DPet · Liam & Ninoosh');updateMenu();
+ tray.on('double-click',()=>pat('liam'));
+ for(const id of IDS)makePet(id);
+ ipcMain.on('dpet:ready',(_event,id:PetId)=>{
+  const pet=pets.get(id);if(pet)pet.window.webContents.send('dpet:state',pet.state);
+ });
+ ipcMain.on('dpet:pat',(_event,id:PetId)=>{if(IDS.includes(id))pat(id);});
+ screen.on('display-metrics-changed',()=>{for(const id of IDS)reposition(id);});
+ lastTick=Date.now();tickTimer=setInterval(tick,60);
+}
+if(!app.requestSingleInstanceLock())app.quit();
+else{
+ app.on('second-instance',()=>{for(const [id,p] of pets)if(settings.enabled[id])p.window.showInactive();});
+ app.whenReady().then(()=>{
+  if(process.platform==='darwin')app.dock?.hide();
+  if(process.platform==='win32')app.setAppUserModelId('app.dpet.desktop');
+  startApp();
+ }).catch(console.error);
+ app.on('before-quit',()=>{if(tickTimer)clearInterval(tickTimer);persist();});
+ app.on('window-all-closed',()=>app.quit());
 }
