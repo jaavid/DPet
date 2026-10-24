@@ -87,7 +87,7 @@ export async function normalizeAtlas(input,kind='walk'){
     // Jump artwork needs some vertical space beneath the feet for visual flight.
     const ground=(kind==='actions'&&index===6)?FRAME-13:FRAME-PAD;
     const left=index%4*FRAME+Math.floor((FRAME-width)/2);
-    const top=Math.floor(index/4)*FRAME+Math.min(FRAME-PAD-height,ground-height);
+    const top=Math.floor(index/4)*FRAME+Math.max(PAD,Math.min(FRAME-PAD-height,ground-height));
     if(left%FRAME<PAD||top%FRAME<0||left%FRAME+width>FRAME-PAD||top%FRAME+height>FRAME-PAD){
       throw new Error('Sprite escaped safe frame '+index);
     }
