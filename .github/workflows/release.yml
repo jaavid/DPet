@@ -33,6 +33,9 @@ jobs:
           - os: windows-latest
             platform: win
             name: DPet-Windows
+          - os: ubuntu-24.04
+            platform: linux
+            name: DPet-Ubuntu
     runs-on: ${{ matrix.os }}
     env:
       CSC_IDENTITY_AUTO_DISCOVERY: 'false'
@@ -78,6 +81,8 @@ jobs:
             release/*.exe
             release/*.dmg
             release/*.zip
+            release/*.AppImage
+            release/*.deb
             release/beta.yml
             release/beta-mac.yml
             release/latest.yml
@@ -115,6 +120,6 @@ jobs:
             tag="v$(node -p "require('./package.json').version")-beta.$RUN_NUMBER"
             args=(--prerelease)
           fi
-          mapfile -d '' files < <(find downloaded -maxdepth 1 -type f \( -name '*.exe' -o -name '*.dmg' -o -name '*.zip' -o -name 'beta.yml' -o -name 'beta-mac.yml' -o -name 'latest.yml' -o -name 'latest-mac.yml' -o -name '*.blockmap' \) -print0)
+          mapfile -d '' files < <(find downloaded -maxdepth 1 -type f \( -name '*.exe' -o -name '*.dmg' -o -name '*.zip' -o -name '*.AppImage' -o -name '*.deb' -o -name 'beta.yml' -o -name 'beta-mac.yml' -o -name 'latest.yml' -o -name 'latest-mac.yml' -o -name '*.blockmap' \) -print0)
           if [[ ${#files[@]} -eq 0 ]]; then echo 'No release files found'; exit 1; fi
           gh release create "$tag" "${files[@]}" --target "$HEAD_SHA" --title "DPet $tag" --generate-notes "${args[@]}"

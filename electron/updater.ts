@@ -70,14 +70,21 @@ export class UpdateService{
    }});
    if(!response.ok)throw new Error('GitHub HTTP '+response.status);
    const releases=await response.json() as Release[];
+   const architecture=process.arch==='arm64'?'arm64':'x64';
+   const isInstaller=(name:string):boolean=>{
+     if(process.platform==='win32')return name==='DPet-Setup-'+app.getVersion().replace(/-beta\..*$/,'')+'-'+architecture+'.exe'||/^DPet-Setup-.*-x64\.exe$/.test(name);
+     if(process.platform==='darwin')return name.endsWith('-mac-'+architecture+'.dmg');
+     if(process.platform==='linux')return name.endsWith('-linux-'+architecture+'.deb')||name.endsWith('-linux-'+architecture+'.AppImage');
+     return false;
+   };
    const release=releases.find(r=>!r.draft&&
     !!parseVersion(r.tag_name)&&newerVersion(r.tag_name,app.getVersion())&&
     r.html_url.startsWith(DOWNLOADS+'/tag/')&&
-    (r.assets?.some(a=>a.name.endsWith(process.platform==='win32'?'.exe':'.dmg'))??false)
+    (r.assets?.some(a=>isInstaller(a.name))??false)
    );
    if(release){
-    const architecture=process.arch==='arm64'?'arm64':'x64';
-    const suffix='-mac-'+architecture+'.dmg';
+    const suffix=process.platform==='linux'?'-linux-'+architecture+'.deb':
+      '-mac-'+architecture+'.dmg';
     const asset=release.assets?.find(a=>a.name.endsWith(suffix)&&
       a.browser_download_url.startsWith(DOWNLOADS+'/download/'));
     this.update({phase:'available',version:release.tag_name.replace(/^v/,''),
@@ -97,7 +104,7 @@ export class UpdateService{
   }finally{this.checking=false;}
  }
  openRelease():void{
-  const link=process.platform==='darwin'?this.state.downloadUrl:undefined;
+  const link=process.platform==='darwin'||process.platform==='linux'?this.state.downloadUrl:undefined;
   const target=link?.startsWith(DOWNLOADS+'/download/')?link:
     this.state.url?.startsWith(DOWNLOADS+'/tag/')?this.state.url:DOWNLOADS;
   void shell.openExternal(target);

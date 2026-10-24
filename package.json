@@ -1,6 +1,6 @@
 {
   "name": "dpet",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "DPet — Liam, Ninoosh, Ozy & Slash: desktop cat companions",
   "private": true,
   "type": "module",
@@ -17,7 +17,8 @@
     "build:electron": "esbuild electron/main.ts --bundle --platform=node --target=node22 --format=cjs --external:electron --external:electron-updater --outfile=dist-electron/main.cjs && esbuild electron/preload.ts --bundle --platform=node --target=node22 --format=cjs --external:electron --outfile=dist-electron/preload.cjs",
     "build": "npm run assets && npm run typecheck && vite build && npm run build:electron",
     "dist:mac": "npm run build && electron-builder --mac dmg zip --x64 --arm64 --publish never",
-    "dist:win": "npm run build && electron-builder --win nsis portable --publish never"
+    "dist:win": "npm run build && electron-builder --win nsis portable --publish never",
+    "dist:linux": "npm run build && electron-builder --linux AppImage deb --x64 --publish never"
   },
   "devDependencies": {
     "@types/node": "22.15.30",
@@ -101,6 +102,27 @@
       "provider": "github",
       "owner": "jaavid",
       "repo": "DPet"
+    },
+    "linux": {
+      "category": "Game",
+      "synopsis": "Four curious desktop cat companions",
+      "description": "Liam, Ninoosh, Ozy and Slash roam, nap and play on your desktop.",
+      "icon": "build/icon.png",
+      "target": [
+        {
+          "target": "AppImage",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "deb",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "artifactName": "DPet-${version}-linux-${arch}.${ext}"
     }
   },
   "repository": {

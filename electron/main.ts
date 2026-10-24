@@ -139,7 +139,8 @@ function makeMenu():Menu{
     return 'Unable to check for updates';
    })(),enabled:false},
    {label:'Check for updates now',click:()=>{void updates?.check(true);}},
-   {label:process.platform==='darwin'?'Download update (macOS requires manual install)':'Open latest release',
+   {label:process.platform==='darwin'?'Download update (macOS requires manual install)':
+     process.platform==='linux'?'Download update (.deb manual install)':'Open latest release',
     click:()=>updates?.openRelease()},
    {label:'Restart to install downloaded update',visible:process.platform==='win32',
     enabled:updates?.status.phase==='downloaded',click:()=>updates?.installDownloaded()}
@@ -223,6 +224,10 @@ function startApp():void{
  screen.on('display-metrics-changed',()=>{for(const id of IDS)reposition(id);});
  lastTick=Date.now();tickTimer=setInterval(tick,60);
 }
+// Transparent, movable overlays work more reliably through X11/XWayland than
+// native Wayland, where compositors generally restrict absolute positioning.
+if(process.platform==='linux')
+ app.commandLine.appendSwitch('ozone-platform',process.env.DPET_OZONE_PLATFORM||'x11');
 if(!app.requestSingleInstanceLock())app.quit();
 else{
  app.on('second-instance',()=>{for(const [id,p] of pets)if(settings.enabled[id])p.window.showInactive();});
