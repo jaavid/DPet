@@ -52,4 +52,4 @@ Future mobile and Android TV builds may reuse the core state machine, with platf
 
 **Artwork:** Liam's walk uses the existing prototype sprite; Ninoosh and the additional actions are new stylized pixel-like recreations based on the supplied cat photo. Higher-fidelity animation sheets remain a future art task.
 
-Licensed under MIT; see LICENSE.
+Copyright © 2026 DPet contributors. All rights reserved until a license is explicitly selected.
