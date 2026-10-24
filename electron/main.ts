@@ -137,7 +137,6 @@ function makePet(id:PetId):void{
  const area=screen.getPrimaryDisplay().workArea;
  const s=initialPet(id,Math.max(0,area.width-settings.size),settings.placement);
  const win=new BrowserWindow({
-  width:settings.size,height:settings.size,
   ...petBounds(area,settings.size,settings.floorOffset,s.x),
   transparent:true,frame:false,resizable:false,fullscreenable:false,hasShadow:false,
   skipTaskbar:true,alwaysOnTop:true,show:false,backgroundColor:'#00000000',
