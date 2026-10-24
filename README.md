@@ -1,8 +1,8 @@
-# DPet — Liam & Ninoosh
+# DPet — Liam, Ninoosh, Ozy & Slash
 
-**Two tiny cats. One lively desktop.**
+**Four desktop cats. One lively desktop.**
 
-DPet brings Liam and Ninoosh onto your macOS or Windows desktop as independent little companions. Liam is a playful white-and-tabby cat; Ninoosh has a cream coat, a smoky face and folded ears. They walk, greet each other, sit, groom, nap, look around, jump and react to a click.
+DPet brings Liam, Ninoosh, Ozy and Slash onto your macOS or Windows desktop as independent little companions. Liam is a playful white-and-tabby cat; Ninoosh has a cream coat, a smoky face and folded ears. They walk, greet each other, sit, groom, nap, look around, jump and react to a click.
 
 DPet does not need an account, server, microphone, tracking or internet connection.
 
@@ -22,7 +22,7 @@ Click the **DPet icon** in the Mac menu bar or Windows tray to open settings:
 - **Liam actions / Ninoosh actions** — pet (happy reaction), walk, sit, groom, nap, play, look, jump, happy.
 - **Launch at login** and Quit.
 
-Preferences are saved locally. Each pet has a separate transparent desktop overlay; clicks outside the visible sprite pass through.
+Preferences are saved locally. Each of the four pets has a separate transparent desktop overlay; clicks outside the visible sprite pass through.
 
 ## Local development
 
@@ -55,3 +55,13 @@ Future mobile and Android TV builds may reuse the core state machine, with platf
 **Artwork:** All four approved pixel-art sheets for Liam and Ninoosh are committed as PNG files, processed from the supplied character concept art. Actions are keyed as `[idle, look, sit, groom, nap, play, jump, happy]` in 4×2 order. Walk uses eight separate frames. Non-walk actions currently show one approved pose each; full multi-frame action animations remain a future step.
 
 Copyright © 2026 DPet contributors. All rights reserved until a license is explicitly selected.
+
+## Automatic update behavior
+
+DPet checks public GitHub Releases when launched, then approximately every four hours (switchable from **Tray → Updates**). When a newer beta is published, a desktop notification and tray action appear; no manual version checking is required.
+
+- **Windows installer (NSIS):** uses `electron-updater` to download SHA-512-verified update packages, and installs them after the app quits or from **Restart to install downloaded update**. The Portable edition is not a supported in-place auto-update target.
+- **Unsigned macOS beta:** shows the new version and takes you to the correct GitHub Release to install manually. Apple's Squirrel.Mac updater requires a signed app; without an Apple Developer ID certificate this cannot safely auto-replace the app. No account is required to build or test DPet.
+- **After signing/notarization:** native macOS updater support can be enabled by the same release metadata.
+
+DPet only checks releases when update checks are enabled. No telemetry, account, or updater service beyond GitHub is required.

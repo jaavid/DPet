@@ -37,3 +37,7 @@ Later, configure `WIN_CSC_LINK` and `WIN_CSC_PASSWORD` with a trusted Windows co
 ## Release versioning
 
 Every push to main validates and creates a numbered prerelease like `v0.2.0-beta.N`; the packaged app version matches the tag. Explicit `v*` tags create named GitHub releases.
+
+## In-app updates
+
+DPet checks GitHub Releases automatically. Windows NSIS builds can download and install updates using `electron-updater` and the generated `beta.yml` manifest; **Windows Portable** is not supported for in-place updates. Unsigned macOS builds **cannot** use Apple's automatic-install updater, so the app displays an update notification and opens the official GitHub download. Official macOS in-place auto-updates require Apple Developer ID signing and an appropriately signed update ZIP; this is deliberately disabled for unsigned betas.
