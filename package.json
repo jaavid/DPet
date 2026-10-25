@@ -111,8 +111,7 @@
       "maintainer": "DPet contributors <1959108+jaavid@users.noreply.github.com>",
       "syncDesktopName": true,
       "executableName": "dpet"
-    },
-    "description": "Six animated desktop companions: four cats and two cockatiels."
+    }
   },
   "repository": {
     "type": "git",
