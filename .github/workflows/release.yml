@@ -14,6 +14,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - name: Use supported npm resolver
+        run: npm install --global npm@11.21.1
       - name: Install
         run: npm install --no-audit --no-fund
       - name: Verify
@@ -51,6 +53,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - name: Use supported npm resolver
+        run: npm install --global npm@11.21.1
       - name: Install
         run: npm install --no-audit --no-fund
       - name: Load optional signing certificate
