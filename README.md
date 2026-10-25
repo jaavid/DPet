@@ -1,81 +1,76 @@
-# DPet — Liam, Ninoosh, Ozy, Slash, Toto & Chico
+# DPet — six desktop companions
 
-**Four cats and two cockatiels. One lively desktop.**
+Bring **Liam, Ninoosh, Ozy, Slash, Toto and Chico** to your desktop. Four cats and two cockatiels can wander, play, rest and react to clicks.
 
-DPet brings four cats (Liam, Ninoosh, Ozy, Slash) and two cockatiels (Toto, Chico) onto your macOS, Windows or Linux desktop. Liam is a playful white-and-tabby cat; Ninoosh has a cream coat, a smoky face and folded ears. They walk, greet each other, sit, groom, nap, look around, jump and react to a click.
+**Windows, macOS and Ubuntu.** No account, server or tracking required to run DPet.
 
-DPet does not need an account, server, microphone, tracking or internet connection.
+## Download the newest beta
 
-## Download
+These links **always point to the newest beta installer**, without needing to look up a version number.
 
-Download the latest automated beta from [GitHub Releases](https://github.com/jaavid/DPet/releases). Builds are available for Apple Silicon and Intel macOS (DMG/ZIP), Windows x64 (Setup/Portable), and Ubuntu/Debian x64 (.deb/AppImage). Unsigned beta installers can trigger macOS Gatekeeper or Windows SmartScreen; see [Signing and installation](docs/SIGNING.md).
+| System | Download | Install |
+| --- | --- | --- |
+| Windows 10/11 (x64) | [DPet Windows Setup (.exe)](https://github.com/jaavid/DPet/releases/download/current-beta/DPet-Windows-Setup.exe) | Double-click and follow the installer |
+| Mac Apple Silicon (M1–M-series) | [DPet macOS Apple Silicon (.dmg)](https://github.com/jaavid/DPet/releases/download/current-beta/DPet-mac-arm64.dmg) | Open DMG, drag DPet into Applications |
+| Mac Intel | [DPet macOS Intel (.dmg)](https://github.com/jaavid/DPet/releases/download/current-beta/DPet-mac-x64.dmg) | Open DMG, drag DPet into Applications |
+| Ubuntu/Debian (amd64) | [DPet Ubuntu (.deb)](https://github.com/jaavid/DPet/releases/download/current-beta/DPet-Ubuntu-amd64.deb) | Double-click using your package installer, or see below |
 
-## Controls
+[All versioned releases](https://github.com/jaavid/DPet/releases) · [Current beta downloads](https://github.com/jaavid/DPet/releases/tag/current-beta)
 
-Click the **DPet icon** in the Mac menu bar or Windows/Linux system tray to open settings:
+### First launch on macOS
 
-- **Pets** — show or hide all six companions independently.
-- **Size** — 100, 120, 140, 160 or 180 pixels (default 140).
-- **Start position** — left, center, right.
-- **Distance from bottom** — 0, 12, 16, 24, 48 or 80 pixels.
-- **Pause roaming** and **Playful behavior**.
-- **Character actions** — cats have their usual poses; birds have perching, preening, hopping, bowing and wing-spreading poses.
-- **Launch at login** and Quit.
+The beta is **not Apple Developer ID signed or notarized yet**. If Gatekeeper refuses to open DPet, try **System Settings → Privacy & Security → Open Anyway** after attempting to launch it. If that option does not appear, and **only after verifying you downloaded your own trusted build**, you may run:
 
-Preferences are saved locally. Each of the six pets has a separate transparent desktop overlay; clicks outside the visible sprite pass through.
+```bash
+xattr -dr com.apple.quarantine "/Applications/DPet.app"
+open "/Applications/DPet.app"
+```
 
-## Local development
+Never disable Gatekeeper system-wide. See [Signing details](docs/SIGNING.md).
 
-Requires Node 22+:
+### Ubuntu terminal install
+
+Download the DEB above, then run:
+
+```bash
+cd ~/Downloads
+sudo apt install ./DPet-Ubuntu-amd64.deb
+```
+
+If you downloaded a versioned release instead, substitute its actual DEB filename. DPet is a graphical desktop app; GNOME/Wayland may restrict transparent overlay placement, so an X11 session is recommended for the first test.
+
+## Controls and updates
+
+Open the **DPet icon** in the macOS menu bar or Windows/Linux system tray. Select which companions appear using **Pets**. Change Size, Start position, Distance from bottom, or toggle playful activity. Select individual actions such as grooming, napping, hopping or spreading wings.
+
+DPet checks GitHub for new releases at startup and roughly every four hours; toggle it in **Updates**. Windows NSIS installers support background download and install on quit (when update metadata is available). On unsigned macOS and Ubuntu DEB, DPet notifies you of a newer version and opens the installer link; installation is manual.
+
+## Develop
+
+Requires Node.js 22+.
 
 ```bash
 git clone https://github.com/jaavid/DPet.git
 cd DPet
 npm install
-npm run dev      # Electron desktop preview
-npm run web      # Browser-only preview
+npm run dev
 npm run typecheck
 npm test
 ```
 
-Packaging: `npm run dist:mac` on Mac, `npm run dist:win` on Windows, or `npm run dist:linux` on Ubuntu/Debian.
+Use `npm run web` for a browser preview, or build installers on the matching OS with `npm run dist:mac`, `npm run dist:win`, `npm run dist:linux`.
 
-## Architecture
+## Implementation
 
-- `src/core/` — platform-independent deterministic behavior engine, with tests.
-- `src/main.ts` — Canvas renderer for desktop and browser.
-- `electron/` — native transparent windows, tray, saved settings and positioning.
-- `assets/sprite-sheets/` — twelve versioned, transparent 320×160 PNG atlases (80×80 frame, 4×2 grid).
-- `src/core/spriteAtlas.ts` — shared frame order and mapping to behavior states.
-- `scripts/prepare-assets.mjs` — validates/copies approved atlases and generates branded native icons.
-- `docs/SIGNING.md` — unsigned beta testing and official signing/notarization.
+- `src/core`: platform-independent deterministic pet behavior + tests.
+- `electron`: native desktop overlays, tray, update checks and preferences.
+- `src/main.ts`: Canvas renderer.
+- `assets/sprite-sheets`: versioned sprite atlases.
+- `scripts/prepare-assets.mjs`: sprite normalization and native icons.
+- `.github/workflows/release.yml`: builds macOS DMGs and internal ZIP update payloads, Windows Setup, Ubuntu DEB, and updater metadata. Public releases preserve ZIP and relevant blockmaps for update support; they are not alternate installers.
 
-Future mobile and Android TV builds may reuse the core state machine, with platform-specific frontends. iOS does not support a free-floating overlay across other apps.
+### Future platforms
 
-**Artwork:** Character sprite sheets are committed as PNG files and normalized with transparent frame padding. Actions are keyed as `[idle, look, sit, groom, nap, play, jump, happy]` in 4×2 order. Walk uses eight separate frames. Non-walk actions currently show one approved pose each; full multi-frame action animations remain a future step.
+The portable behavior engine can power Android, Android TV and an iOS in-app companion, but iOS does not allow an unrestricted floating pet over other apps.
 
-Copyright © 2026 DPet contributors. All rights reserved until a license is explicitly selected.
-
-## Automatic update behavior
-
-DPet checks public GitHub Releases when launched, then approximately every four hours (switchable from **Tray → Updates**). When a newer beta is published, a desktop notification and tray action appear; no manual version checking is required.
-
-- **Windows installer (NSIS):** uses `electron-updater` to download SHA-512-verified update packages, and installs them after the app quits or from **Restart to install downloaded update**. The Portable edition is not a supported in-place auto-update target.
-- **Linux (.deb/AppImage):** detects new GitHub Releases automatically and links to the Linux .deb; update installation is manual (not apt-backed by default).
-- **Unsigned macOS beta:** shows the new version and takes you to the correct GitHub Release to install manually. Apple's Squirrel.Mac updater requires a signed app; without an Apple Developer ID certificate this cannot safely auto-replace the app. No account is required to build or test DPet.
-- **After signing/notarization:** native macOS updater support can be enabled by the same release metadata.
-
-DPet only checks releases when update checks are enabled. No telemetry, account, or updater service beyond GitHub is required.
-
-## Ubuntu / Linux installation
-
-DPet provides **x86_64/amd64** packages; both formats require a graphical desktop session:
-
-- **Debian / Ubuntu:** download `DPet-*-linux-amd64.deb`, then install with `sudo apt install ./DPet-*-linux-amd64.deb` in the download directory. Launch from the application menu or `dpet`.
-- **AppImage:** download `DPet-*-linux-x86_64.AppImage`, run `chmod +x DPet-*-linux-x86_64.AppImage`, then `./DPet-*-linux-x86_64.AppImage`. On distributions with missing FUSE 2 runtime, prefer the .deb instead of changing system security settings.
-
-**Desktop limitation:** DPet uses transparent topmost windows and a tray icon. GNOME/Wayland compositors may restrict window positioning and always-on-top behavior; an **X11 desktop session** (or XWayland where supported) is recommended. This CI build validates packaging but does not exercise every Ubuntu compositor in a real interactive session.
-
-## Toto and Chico
-
-Toto is the entirely yellow cockatiel. Chico is the gray cockatiel with yellow crest/face and white wing patches. Both have separate eight-frame walk and action atlases. All six characters are selectable in the Tray > Pets menu. Existing saved pet preferences are preserved; new companions are enabled by default. The built-in update checker is unchanged.
+© 2026 DPet contributors. All rights reserved; no open-source license has been granted.

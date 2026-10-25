@@ -81,13 +81,13 @@ jobs:
             release/*.exe
             release/*.dmg
             release/*.zip
-            release/*.AppImage
             release/*.deb
             release/beta.yml
             release/beta-mac.yml
             release/latest.yml
             release/latest-mac.yml
-            release/*.blockmap
+            release/*exe.blockmap
+            release/*zip.blockmap
           if-no-files-found: error
           retention-days: 30
   release:
@@ -120,6 +120,19 @@ jobs:
             tag="v$(node -p "require('./package.json').version")-beta.$RUN_NUMBER"
             args=(--prerelease)
           fi
-          mapfile -d '' files < <(find downloaded -maxdepth 1 -type f \( -name '*.exe' -o -name '*.dmg' -o -name '*.zip' -o -name '*.AppImage' -o -name '*.deb' -o -name 'beta.yml' -o -name 'beta-mac.yml' -o -name 'latest.yml' -o -name 'latest-mac.yml' -o -name '*.blockmap' \) -print0)
+          mapfile -d '' files < <(find downloaded -maxdepth 1 -type f \( -name '*.exe' -o -name '*.dmg' -o -name '*.zip' -o -name '*.deb' -o -name 'beta.yml' -o -name 'beta-mac.yml' -o -name 'latest.yml' -o -name 'latest-mac.yml' -o -name '*exe.blockmap' -o -name '*zip.blockmap' \) -print0)
           if [[ ${#files[@]} -eq 0 ]]; then echo 'No release files found'; exit 1; fi
           gh release create "$tag" "${files[@]}" --target "$HEAD_SHA" --title "DPet $tag" --generate-notes "${args[@]}"
+          # Keep a second, fixed download URL for the newest beta, even though
+          # GitHub /releases/latest intentionally excludes prereleases.
+          # Versioned releases remain immutable and are used by electron-updater.
+          mkdir -p direct
+          cp downloaded/DPet-Setup-*x64.exe direct/DPet-Windows-Setup.exe
+          cp downloaded/DPet-*-mac-arm64.dmg direct/DPet-mac-arm64.dmg
+          cp downloaded/DPet-*-mac-x64.dmg direct/DPet-mac-x64.dmg
+          cp downloaded/DPet-*-linux-amd64.deb direct/DPet-Ubuntu-amd64.deb
+          if ! gh release view current-beta >/dev/null 2>&1; then
+            gh release create current-beta --target "$HEAD_SHA" --title "DPet | Current Beta Downloads" \
+              --notes "Latest beta installers. See the versioned release for full assets and update metadata." --prerelease
+          fi
+          gh release upload current-beta direct/* --clobber
